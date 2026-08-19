@@ -22,7 +22,7 @@ WhatsApp: [HH.MM, DD/MM/YYYY] → Sheet: M/D/YYYY
 
 ## SITE MAPPING
 Menara BNI → "User - Menara BNI" | Plaza BNI → "User - Plaza BNI" | Citicon → "User - BNI Citicon" | Grha BNI → "User - Grha BNI" | RDTX → "User - BNI RDTX"
-Unknown → "User - BNI"
+Unknown site → use the mapped site only when it is known; otherwise leave the requester location detail empty.
 
 ## FORMAT
 - Date: M/D/YYYY (e.g., 6/23/2026)
@@ -30,10 +30,14 @@ Unknown → "User - BNI"
 - Resolution: H:MM:SS (e.g., 2:30:00)
 
 ## PROBLEM FORMAT
-[Issue] at [Location] ([Name] / [NPP] / [Floor])
+- Write the issue and location in formal English.
+- Add user details in parentheses only when they are explicitly present in the chat.
+- Never invent or output placeholder values such as "Unknown", "N/A", "Not available", "-", or "Unknown / Unknown / Unknown".
+- If a name, NPP, floor, or other user detail is missing, omit that detail and remove empty parentheses or trailing separators.
 Examples:
 - "Request to whitelist device for intranet access at Citicon (From User Rizky/P055677)"
 - "Endpoint unable to connect to WiFi-Intranet at Menara BNI (Lutfi / NPP 901511 / Lt.17)"
+- "No internet connection at Citicon" (when the user details are not provided)
 
 ## ACTION FORMAT
 [What was done] [details]
