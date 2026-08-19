@@ -1,245 +1,184 @@
 # ITSM NAC BNI Timesheet Analyzer
 
-A web application for analyzing WhatsApp chat logs from NAC BNI and automatically generating ITSM timesheet tickets, then saving them to Google Sheets.
+ITSM NAC BNI Timesheet Analyzer mengubah log percakapan WhatsApp menjadi tiket timesheet ITSM menggunakan AI, lalu membantu menyimpan, meninjau, mengimpor, dan mengekspor data tiket melalui Google Sheets.
 
----
+## Fitur
 
-## Key Features
-
-- **WhatsApp Chat Analysis** — Paste chat logs; AI automatically extracts ITSM tickets
-- **Multi-Session Management** — Manage multiple analysis sessions with sidebar
-- **Sequential Numbering** — Ticket numbers automatically increment across chats within a session
-- **Inline Editing** — Click table cells to edit tickets directly in the UI
-- **Google Sheets Sync** — Tickets automatically sent to spreadsheet after analysis
-- **Export** — Download tickets as Excel/CSV files
-- **Dark Mode** — Toggle between dark and light themes
-- **Custom Rules** — Add custom extraction rules per session
-- **Auto Re-auth** — Google OAuth tokens automatically refreshed when expired (1 hour)
-- **Auto-import from Sheets** — Automatically load existing tickets from Google Sheets on startup
-- **Manual Import** — Button to import new manually-entered tickets from Sheets
-- **Real-time Refresh** — Refresh button to fetch latest data from Google Sheets
-
----
+- Analisis log WhatsApp dengan Groq AI.
+- Ekstraksi tiket terstruktur dengan penomoran berurutan.
+- Beberapa session analisis dengan penyimpanan lokal.
+- Penyuntingan tiket langsung di tabel.
+- Persetujuan dan sinkronisasi tiket ke Google Sheets.
+- Import dan refresh data dari Google Sheets.
+- Export tiket ke Excel atau CSV.
+- Dashboard KPI, grafik, statistik, pencarian, filter, dan riwayat tiket.
+- Dark mode, custom extraction rules, retry sync, dan indikator batas token.
+- Tokenisasi nilai MAC address dan IP address sebelum data dikirim ke AI.
 
 ## Tech Stack
 
-| Layer | Library / Service |
+| Area | Teknologi |
 |---|---|
-| Frontend | React 18 + Vite 5 |
-| Styling | Tailwind CSS 3 + Framer Motion |
-| AI / LLM | Groq API (`openai/gpt-oss-120b` by default) |
-| Auth | Google Identity Services (GIS) OAuth 2.0 Implicit Flow |
-| Storage | Google Sheets API v4 (direct REST) |
-| Export | SheetJS (xlsx) |
-| Icons | Lucide React |
-| Charts | Recharts |
+| Frontend | React 18, Vite 5, React Router |
+| Styling dan animasi | Tailwind CSS, Framer Motion |
+| AI | Groq API |
+| Authentication dan storage | Google Identity Services, Google Sheets API v4 |
+| Export | SheetJS (`xlsx`) |
+| UI dan chart | Lucide React, Recharts |
 
----
+## Prasyarat
 
-## Prerequisites
+- Node.js 18 atau lebih baru.
+- Akun Google dan akses ke Google Cloud Console.
+- Groq API key dari [Groq Console](https://console.groq.com/keys).
 
-- Node.js >= 18
-- Google account with access to Google Cloud Console
-- Groq API Key (free at https://console.groq.com)
+## Instalasi
 
-
----
-
-## Setup
-
-### 1. Clone & Install
+### 1. Clone dan install dependency
 
 ```bash
+git clone https://github.com/chaerudin79/itsm-timesheet-app.git
 cd itsm-timesheet-app
 npm install
 ```
 
-### 2. Configure Environment
+### 2. Buat file environment
 
-Create a `.env` file in the project root:
+Buat file `.env` di root project. Jangan commit file ini karena berisi credential.
 
 ```env
-VITE_GROQ_API_KEY=gsk_xxxxxxxxxxxxxxxxxxxxxxxxxxxx
+VITE_GROQ_API_KEY=gsk_your_key_here
 VITE_GROQ_MODEL=openai/gpt-oss-120b
-VITE_GROQ_TPM_LIMIT=250000
-VITE_GOOGLE_CLIENT_ID=xxxxxxxxxx.apps.googleusercontent.com
-VITE_GOOGLE_SHEET_ID=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+VITE_GROQ_TPM_LIMIT=8000
+VITE_GROQ_MAX_OUTPUT_TOKENS=2000
+VITE_GROQ_TPM_BUFFER=500
+VITE_GOOGLE_CLIENT_ID=your_client_id.apps.googleusercontent.com
+VITE_GOOGLE_SHEET_ID=your_google_sheet_id
 ```
 
-| Variable | Description |
+| Variable | Keterangan |
 |---|---|
-| `VITE_GROQ_API_KEY` | API key from https://console.groq.com/keys |
-| `VITE_GROQ_MODEL` | Optional Groq model ID. Defaults to `openai/gpt-oss-120b` |
-| `VITE_GROQ_TPM_LIMIT` | Optional display limit for the rate-limit indicator |
-| `VITE_GOOGLE_CLIENT_ID` | OAuth 2.0 Client ID from Google Cloud Console |
-| `VITE_GOOGLE_SHEET_ID` | Target Google Spreadsheet ID (from sheet URL) |
+| `VITE_GROQ_API_KEY` | API key untuk request ke Groq. |
+| `VITE_GROQ_MODEL` | Model Groq yang digunakan. Dapat diganti sesuai model yang tersedia. |
+| `VITE_GROQ_TPM_LIMIT` | Batas token per menit yang ditampilkan di UI. |
+| `VITE_GROQ_MAX_OUTPUT_TOKENS` | Batas maksimum token output AI. |
+| `VITE_GROQ_TPM_BUFFER` | Buffer token untuk indikator rate limit. |
+| `VITE_GOOGLE_CLIENT_ID` | OAuth Client ID untuk aplikasi web. |
+| `VITE_GOOGLE_SHEET_ID` | ID spreadsheet tujuan. |
 
-> The Groq API key can also be entered and overridden at runtime via the Settings page — it will be saved to `localStorage` under the key `groqApiKey`.
+API key Groq juga dapat diatur dari halaman Settings dan disimpan di browser melalui `localStorage`. Access token Google tidak disimpan di `localStorage`; aplikasi hanya menyimpan metadata autentikasi yang diperlukan untuk sesi berikutnya.
 
-### 3. Google OAuth Setup
+### 3. Konfigurasi Google Sheets
 
-1. Open Google Cloud Console → **APIs & Services** → **Credentials**
-2. Create **OAuth 2.0 Client ID** → select **Web application**
-3. Add Authorized JavaScript origins:
-   ```
-   http://localhost:5173
-   ```
-4. Enable **Google Sheets API** in the library
+1. Buka Google Cloud Console.
+2. Buat atau pilih project.
+3. Enable **Google Sheets API**.
+4. Buat **OAuth 2.0 Client ID** dengan tipe **Web application**.
+5. Tambahkan origin berikut ke **Authorized JavaScript origins**:
 
-> **Note:** Port must be `5173`. Vite is configured with `strictPort: true` to prevent port changes that would break OAuth redirect.
+```text
+http://localhost:5173
+```
 
-### 4. Run Dev Server
+6. Pastikan akun Google yang digunakan memiliki akses edit ke spreadsheet tujuan.
+
+> Vite menggunakan port `5173` secara strict. Port ini harus sama dengan origin OAuth yang didaftarkan.
+
+### 4. Jalankan aplikasi
 
 ```bash
 npm run dev
 ```
 
-Open browser to `http://localhost:5173`
+Buka [http://localhost:5173](http://localhost:5173) di browser.
 
+## Alur Penggunaan
 
+1. Hubungkan Google Client ID dan Google Sheet ID, lalu berikan izin akses Google Sheets.
+2. Buat session baru dari sidebar.
+3. Tempel log WhatsApp pada halaman Analyzer.
+4. Kirim log untuk diproses AI.
+5. Periksa dan edit tiket pada tabel.
+6. Setujui tiket untuk mengirimkannya ke Google Sheets.
+7. Gunakan Import atau Refresh untuk mengambil data terbaru dari spreadsheet.
+8. Gunakan Export untuk mengunduh data sebagai Excel atau CSV.
 
-## Usage Guide
+## Struktur Data Tiket
 
-1. **Login** — On first open, enter Google Client ID and Sheet ID, then click **Connect**. Browser will request Google Sheets permissions.
-2. **Create Session** — Click the `+` button in sidebar to create a new analysis session.
-3. **Paste Chat** — Copy WhatsApp chat log into the input field, then press Enter or click Send.
-4. **Review Tickets** — AI generates a ticket table. Click cells to edit inline.
-5. **Approve & Sync** — Approve tickets to sync them to Google Sheets. If it fails, a **Retry Sync** banner appears.
-6. **Import** — Click **Import** button to fetch manually-entered tickets from Google Sheets.
-7. **Refresh** — Click **Refresh** button to sync latest data from Sheets to dashboard.
-8. **Export** — Click **Export** button above the table to download Excel/CSV.
-
----
-
-## Ticket Column Structure
-
-| Column | Description |
+| Kolom | Keterangan |
 |---|---|
-| No | Sequential ticket number (continues across chats within a session) |
-| Source | Report source (`WhatsApp`) |
-| Type | `Problem` / `Request Task` / `Change Request` |
-| Requester | Location/user (e.g., `User - Menara BNI`) |
-| Period | Month in English (e.g., `June`) |
-| Year | Year |
-| Problem/Issue | Problem description — formal English |
-| Action | Action taken — formal English |
-| Date | Date (format `M/D/YYYY`) |
-| Task Started | Start time (format `M/D/YYYY H:MM`) |
-| Task Finished | End time (format `M/D/YYYY H:MM`) |
-| Resolution Time | Resolution duration (`H:MM:SS`) |
-| Status | `CLOSED` / `OPEN` |
-| Engineer | Default: `ITSM NAC BNI` |
-| Remarks | Additional notes |
+| `No` | Nomor tiket berurutan. |
+| `Source` | Sumber laporan, biasanya `WhatsApp`. |
+| `Type` | `Problem`, `Service Request`, `Incident`, atau `Change Request`. |
+| `Requester` | Lokasi atau user pelapor. |
+| `Period` dan `Year` | Periode timesheet. |
+| `Problem/Issue` | Deskripsi masalah dalam bahasa Inggris formal. |
+| `Action` | Tindakan atau penyelesaian dalam bahasa Inggris formal. |
+| `Date` | Tanggal tiket. |
+| `Task Started` dan `Task Finished` | Waktu mulai dan selesai tugas. |
+| `Resolution Time` | Durasi penyelesaian. |
+| `Status` | Status tiket, misalnya `OPEN` atau `CLOSED`. |
+| `Engineer` | Engineer yang menangani tiket. |
+| `Remarks` | Catatan tambahan. |
 
----
+## Batasan dan Catatan Keamanan
 
-## Site Mapping
+- Ketersediaan model dan rate limit Groq dapat berubah; periksa Groq Console jika model tidak dapat digunakan.
+- Log yang terlalu panjang dapat ditolak API. Bagi log menjadi beberapa bagian dan analisis secara terpisah.
+- Jangan menaruh API key atau credential langsung di source code.
+- File `.env`, `node_modules`, dan `dist` diabaikan oleh Git melalui `.gitignore`.
+- Karena aplikasi frontend memanggil layanan eksternal secara langsung, gunakan API key dengan batasan dan rotasi key bila diperlukan. Untuk deployment publik, pertimbangkan backend proxy.
 
-| Chat Name | Ticket Requester |
-|---|---|
-| Menara BNI | User - Menara BNI |
-| Plaza BNI | User - Plaza BNI |
-| Citicon | User - BNI Citicon |
-| Grha BNI | User - Grha BNI |
-| RDTX | User - BNI RDTX |
+## Struktur Project
 
----
-
-## Groq Free Tier Limitations
-
-Groq model availability and limits can change. This app defaults to `openai/gpt-oss-120b`, and you can override it with `VITE_GROQ_MODEL` in `.env`.
-
-- Chat logs > 15,000 characters are rejected before sending to API.
-- **Solution:** Split long chat logs into multiple parts and analyze each part separately.
-- Check your current Groq model limits in the Groq Console.
-
----
-
-## File Structure
-
-```
-itsm-timesheet-app/
-├── src/
-│   ├── App.jsx                       # Root app, routing, provider tree
-│   ├── components/
-│   │   ├── ModernAppLayout.jsx        # App shell: sidebar nav, dark mode
-│   │   ├── ModernHeader.jsx           # Top header bar
-│   │   ├── ModernDataTable.jsx        # Ticket data table
-│   │   ├── ModernKPICard.jsx          # KPI summary card
-│   │   ├── ChatInput.jsx              # Chat input area
-│   │   ├── MessageList.jsx            # Chat message list
-│   │   ├── MessageBubble.jsx          # Individual message + ticket table
-│   │   ├── TicketTable.jsx            # Ticket table with inline editing
-│   │   ├── TicketStats.jsx            # Ticket summary statistics
-│   │   ├── GoogleSheetsModal.jsx      # Initial connection setup form
-│   │   ├── GoogleSheetsStatus.jsx     # Sync status indicator
-│   │   ├── ImportFromSheetsModal.jsx  # Import from Sheets dialog
-│   │   ├── ExportModal.jsx            # Export as Excel/CSV modal
-│   │   ├── SettingsModal.jsx          # Custom rules & API key settings
-│   │   ├── RateLimitIndicator.jsx     # Groq rate limit display
-│   │   ├── ErrorBoundary.jsx          # React error boundary
-│   │   ├── SkeletonLoader.jsx         # Loading skeleton
-│   │   └── LoadingDots.jsx            # Loading animation
-│   ├── lib/
-│   │   ├── groqApi.js                 # Groq API client (LLM)
-│   │   ├── googleAuth.js              # Google OAuth (GIS)
-│   │   ├── googleSheetsApi.js         # Google Sheets API v4 (direct REST)
-│   │   ├── systemPrompt.js            # System prompt for ITSM NAC BNI
-│   │   ├── ticketParser.js            # Parse JSON tickets from LLM response
-│   │   ├── ticketOperations.js        # Ticket batch ops (export, delete, duplicate)
-│   │   ├── tokenizer.js               # MAC/IP tokenizer for privacy
-│   │   └── storageUtils.js            # localStorage wrapper with validation
-│   ├── hooks/
-│   │   ├── useAnalysis.js             # Main AI analysis + Sheets sync hook
-│   │   └── useSheetsSync.js           # Sheets import/audit/sync hook
-│   ├── context/
-│   │   ├── AuthContext.jsx            # Google auth, sheet ID, dark mode, custom rules
-│   │   └── SessionContext.jsx         # Sessions and tickets state
-│   ├── pages/
-│   │   ├── ModernAnalyzerPage.jsx     # Chat analysis page
-│   │   ├── ModernDashboardPage.jsx    # Dashboard with KPIs and charts
-│   │   ├── ModernHistoryPage.jsx      # Ticket history with filters
-│   │   └── ModernSettingsPage.jsx     # Settings page
-│   ├── utils/
-│   │   ├── dateUtils.js               # Date utilities
-│   │   └── ticketUtils.js             # Ticket filter, sort, stats utilities
-│   └── styles/
-│       └── index.css                  # Global styles (dark mode, glassmorphism)
-├── .env                               # Environment variables (do not commit!)
-├── .gitignore
-├── index.html
-├── package.json
-├── vite.config.js
-├── tailwind.config.js
-└── postcss.config.js
+```text
+src/
+├── App.jsx                 # Root app dan routing
+├── components/             # Layout, tabel, modal, chat, dan widget UI
+├── context/                # AuthContext dan SessionContext
+├── hooks/                  # Analisis AI dan sinkronisasi Sheets
+├── lib/                    # API client, parser, tokenizer, dan operasi tiket
+├── pages/                  # Analyzer, Dashboard, History, dan Settings
+├── styles/                 # Global CSS dan tema
+└── utils/                  # Utilitas tanggal dan tiket
 ```
 
----
+## Script NPM
+
+```bash
+npm run dev       # Menjalankan development server
+npm run build     # Membuat production build di dist/
+npm run preview   # Meninjau production build secara lokal
+```
 
 ## Production Build
 
 ```bash
 npm run build
+npm run preview
 ```
 
-Output is in the `dist/` folder. Can be hosted on Nginx, Apache, or static hosting services.
-
-> **Important:** Add production domain to **Authorized JavaScript origins** in Google Cloud Console before deploying.
-
----
+Untuk deployment, tambahkan domain production ke **Authorized JavaScript origins** Google Cloud Console dan sediakan environment variable yang sesuai pada platform hosting.
 
 ## Troubleshooting
 
-| Error | Cause | Solution |
-|---|---|---|
-| `401 Unauthorized` | Groq API key invalid/expired | Check `VITE_GROQ_API_KEY` in `.env` or update via Settings page |
-| `404 model does not exist or you do not have access` | Groq model ID is deprecated, unavailable, or not enabled for your account | Set `VITE_GROQ_MODEL=openai/gpt-oss-120b` or another active model from Groq Console |
-| `413 Request too large` | Chat log too long | Split chat log into multiple parts and analyze separately |
-| `Failed to sync to Google Sheets` | OAuth token expired | Click **Retry Sync**; browser will request permissions again |
-| Port is not 5173 | Port conflict | Close other applications using port 5173 |
-| `Google Client ID not configured` | `.env` missing or incorrect | Check `VITE_GOOGLE_CLIENT_ID` in `.env` |
----
+| Masalah | Solusi |
+|---|---|
+| `401 Unauthorized` dari Groq | Periksa atau ganti `VITE_GROQ_API_KEY`. |
+| Model tidak ditemukan | Atur `VITE_GROQ_MODEL` ke model aktif di Groq Console. |
+| Request terlalu besar | Pecah log WhatsApp menjadi beberapa bagian. |
+| Gagal sinkronisasi Sheets | Klik Retry Sync atau autentikasi Google kembali. |
+| Client ID tidak dikonfigurasi | Periksa `VITE_GOOGLE_CLIENT_ID` dan restart Vite. |
+| OAuth gagal di localhost | Pastikan origin `http://localhost:5173` sudah terdaftar. |
+| Perubahan `.env` tidak terbaca | Restart development server setelah mengubah `.env`. |
 
-## License
+## Kontribusi
 
-Internal use — ITSM NAC BNI Team.
+1. Buat branch baru dari `main`.
+2. Lakukan perubahan dan jalankan `npm run build`.
+3. Buat commit dengan pesan yang jelas.
+4. Push branch dan buat pull request.
+
+## Lisensi
+
+Internal use - ITSM NAC BNI Team.
