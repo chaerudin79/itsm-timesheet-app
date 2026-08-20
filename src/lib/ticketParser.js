@@ -192,7 +192,7 @@ export function parseTickets(responseText, sourceChatText = '') {
             no: ticket.no || idx + 1,
             source: ticket.source || 'WhatsApp',
             type: ticket.type || 'Problem',
-            requester: ticket.requester || '',
+            requester: ticket.requester || 'User - BNI',
             period: ticket.period || '',
             year: ticket.year || new Date().getFullYear(),
             problem: ticket.problem || ticket['Problem/Issue'] || '',

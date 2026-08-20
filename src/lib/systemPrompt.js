@@ -22,7 +22,7 @@ WhatsApp: [HH.MM, DD/MM/YYYY] → Sheet: M/D/YYYY
 
 ## SITE MAPPING
 Menara BNI → "User - Menara BNI" | Plaza BNI → "User - Plaza BNI" | Citicon → "User - BNI Citicon" | Grha BNI → "User - Grha BNI" | RDTX → "User - BNI RDTX"
-Unknown site → use the mapped site only when it is known; otherwise leave the requester location detail empty.
+Unknown site or user → requester MUST be "User - BNI".
 
 ## FORMAT
 - Date: M/D/YYYY (e.g., 6/23/2026)
@@ -31,6 +31,7 @@ Unknown site → use the mapped site only when it is known; otherwise leave the 
 
 ## PROBLEM FORMAT
 - Write the issue and location in formal English.
+- Requester is required. Use the mapped site requester when the site is known; otherwise use exactly "User - BNI".
 - Add user details in parentheses only when they are explicitly present in the chat.
 - Never invent or output placeholder values such as "Unknown", "N/A", "Not available", "-", or "Unknown / Unknown / Unknown".
 - If a name, NPP, floor, or other user detail is missing, omit that detail and remove empty parentheses or trailing separators.
