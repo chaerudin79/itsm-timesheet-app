@@ -90,6 +90,7 @@ function extractFirstResponseTime(chatText = '') {
   if (!firstResponse) return ''
   const seconds = (firstResponse.hour * 60 + firstResponse.minute - (firstClient.hour * 60 + firstClient.minute)) * 60
   if (seconds < 0) return ''
+  if (seconds === 0) return '0:01:00'
   return `${Math.floor(seconds / 3600)}:${String(Math.floor((seconds % 3600) / 60)).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`
 }
 
