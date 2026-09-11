@@ -1,7 +1,9 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect, useCallback } from 'react'
 import { motion } from 'framer-motion'
 import { Search, Filter, X, Download, TrendingUp } from 'lucide-react'
 import { useSession } from '../context/SessionContext'
+import { useAuth } from '../context/AuthContext'
+import { useSheetsSync } from '../hooks/useSheetsSync'
 import { filterTickets, uniqueValues } from '../utils/ticketUtils'
 import ExportModal from '../components/ExportModal'
 import ModernHeader from '../components/ModernHeader'
@@ -25,10 +27,43 @@ const itemVariants = {
 }
 
 export default function ModernHistoryPage() {
-  const { allTickets } = useSession()
+  const { allTickets, setSheetsTickets, lastSheetsSync, setLastSheetsSync } = useSession()
+  const { sheetId } = useAuth()
+  const { loadSheetsData } = useSheetsSync()
   const [filters, setFilters] = useState({ search: '', site: '', status: '', engineer: '', type: '', dateFrom: '', dateTo: '' })
   const [showExport, setShowExport] = useState(false)
   const [showFilters, setShowFilters] = useState(false)
+
+  const refreshHistory = useCallback(async () => {
+    if (!sheetId) return
+    try {
+      const fresh = await loadSheetsData()
+      if (Array.isArray(fresh)) {
+        setSheetsTickets(fresh)
+        if (setLastSheetsSync) setLastSheetsSync(new Date())
+      }
+    } catch (err) {
+      console.error('Failed to refresh history from sheets:', err)
+    }
+  }, [sheetId, loadSheetsData, setSheetsTickets, setLastSheetsSync])
+
+  useEffect(() => {
+    if (!sheetId) return
+    let lastFocus = 0
+    const onFocus = () => {
+      const now = Date.now()
+      if (now - lastFocus > 5000) {
+        lastFocus = now
+        refreshHistory()
+      }
+    }
+    window.addEventListener('focus', onFocus)
+    document.addEventListener('visibilitychange', onFocus)
+    return () => {
+      window.removeEventListener('focus', onFocus)
+      document.removeEventListener('visibilitychange', onFocus)
+    }
+  }, [sheetId, refreshHistory])
 
   const sites = useMemo(() => uniqueValues(allTickets, 'requester'), [allTickets])
   const engineers = useMemo(() => uniqueValues(allTickets, 'engineer'), [allTickets])
@@ -54,7 +89,7 @@ export default function ModernHistoryPage() {
 
   return (
     <>
-      <ModernHeader />
+      <ModernHeader onRefresh={refreshHistory} lastSync={lastSheetsSync} />
       <motion.div
         className="flex-1 overflow-y-auto bg-[var(--bg-base)]"
         initial={{ opacity: 0 }}

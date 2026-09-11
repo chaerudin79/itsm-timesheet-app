@@ -6,6 +6,8 @@ const SessionContext = createContext(null)
 export function SessionProvider({ children }) {
   const [sessions, setSessions] = useState([])
   const [activeSessionId, setActiveSessionId] = useState(null)
+  const [sheetsTickets, setSheetsTickets] = useState(null)
+  const [lastSheetsSync, setLastSheetsSync] = useState(null)
   useEffect(() => {
     const loaded = validateSessions(safeGetItem('sessions', []))
     setSessions(loaded)
@@ -115,14 +117,22 @@ export function SessionProvider({ children }) {
   }, [sessions, activeSessionId])
 
   // Derived: all tickets from all sessions (for History/Dashboard) - only approved ones
+  // When Google Sheets tickets are loaded, Sheets is the source of truth
   const allTickets = useMemo(() => {
+    if (sheetsTickets !== null) {
+      return sheetsTickets
+    }
     return sessions.flatMap(s => (s.tickets || []).filter(t => t.approved !== false))
-  }, [sessions])
+  }, [sessions, sheetsTickets])
   const value = useMemo(() => ({
     sessions,
     activeSession,
     activeSessionId,
     allTickets,
+    sheetsTickets,
+    setSheetsTickets,
+    lastSheetsSync,
+    setLastSheetsSync,
     setActiveSessionId,
     createSession,
     deleteSession,
@@ -133,6 +143,8 @@ export function SessionProvider({ children }) {
     activeSession,
     activeSessionId,
     allTickets,
+    sheetsTickets,
+    lastSheetsSync,
     createSession,
     deleteSession,
     updateSession,

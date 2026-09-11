@@ -10,6 +10,8 @@ export default function SettingsModal({
 }) {
   const [rulesText, setRulesText] = useState(customRules.join('\n'))
   const [apiKeys, setApiKeys] = useState(initialApiKeys)
+  const [analysisProvider, setAnalysisProvider] = useState(() => localStorage.getItem('analysisProvider') || 'groq')
+  const [kimiApiKey, setKimiApiKey] = useState(() => localStorage.getItem('kimiApiKey') || '')
   const [showApiKey, setShowApiKey] = useState(false)
   const [saved, setSaved] = useState(false)
 
@@ -21,6 +23,8 @@ export default function SettingsModal({
     
     onUpdateRules(rules)
     onUpdateApiKeys(apiKeys)
+    localStorage.setItem('analysisProvider', analysisProvider)
+    localStorage.setItem('kimiApiKey', kimiApiKey.trim())
     setSaved(true)
     setTimeout(() => setSaved(false), 2000)
   }
@@ -39,6 +43,19 @@ export default function SettingsModal({
         </div>
 
         <div className="space-y-6">
+          <div>
+            <label className="block text-sm font-semibold text-white mb-2">AI Provider</label>
+            <select
+              value={analysisProvider}
+              onChange={(e) => setAnalysisProvider(e.target.value)}
+              className="w-full px-3 py-2 border border-[var(--border-subtle)] rounded-[8px] bg-[var(--bg-surface-raised)] text-white focus:outline-none focus:border-[var(--accent)] text-sm"
+            >
+              <option value="groq">Groq</option>
+              <option value="kimi">Kimi (Moonshot AI)</option>
+            </select>
+            <p className="text-xs text-slate-400 mt-2">Pilih provider yang digunakan untuk analisis chat berikutnya.</p>
+          </div>
+
           {/* Groq API Key */}
           <div>
             <label className="block text-sm font-semibold text-white mb-2">
@@ -65,6 +82,26 @@ export default function SettingsModal({
           <p className="text-xs text-slate-400 mt-2">
             Masukkan satu atau lebih API key. Jika satu key kehabisan limit, aplikasi akan coba key berikutnya.
           </p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-white mb-2">Kimi API Key</label>
+            <p className="text-xs text-slate-400 mb-3">Digunakan saat provider Kimi dipilih. Model default: <code>kimi-k2.7-code-highspeed</code>.</p>
+            <div className="flex gap-2">
+              <input
+                type={showApiKey ? 'text' : 'password'}
+                value={kimiApiKey}
+                onChange={(e) => setKimiApiKey(e.target.value)}
+                placeholder="sk-..."
+                className="flex-1 px-3 py-2 border border-[var(--border-subtle)] rounded-[8px] bg-[var(--bg-surface-raised)] text-white placeholder-slate-500 focus:outline-none focus:border-[var(--accent)] font-mono text-sm"
+              />
+              <button
+                onClick={() => setShowApiKey(!showApiKey)}
+                className="px-3 py-2 bg-[var(--bg-surface)] border border-[var(--border-subtle)] hover:border-white/20 text-white rounded-[8px] transition-colors text-sm font-medium"
+              >
+                {showApiKey ? 'Hide' : 'Show'}
+              </button>
+            </div>
           </div>
 
           {/* Custom Rules */}

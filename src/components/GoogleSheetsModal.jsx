@@ -1,15 +1,28 @@
 import { useState } from 'react'
 import { Loader2 } from 'lucide-react'
+import { safeGetItem } from '../lib/storageUtils'
+
+function getStoredSetupValues() {
+  const authMeta = safeGetItem('googleAuth')
+  const storedClientId = authMeta?.clientId || import.meta.env.VITE_GOOGLE_CLIENT_ID || ''
+  const storedSheetId = safeGetItem('sheetId') || import.meta.env.VITE_GOOGLE_SHEET_ID || ''
+
+  return {
+    clientId: storedClientId,
+    sheetId: storedSheetId,
+  }
+}
 
 export default function GoogleSheetsModal({ onSetup }) {
-  const [clientId, setClientId] = useState(() => import.meta.env.VITE_GOOGLE_CLIENT_ID || '')
-  const [sheetId, setSheetId] = useState(() => import.meta.env.VITE_GOOGLE_SHEET_ID || '')
+  const initialValues = getStoredSetupValues()
+  const [clientId, setClientId] = useState(initialValues.clientId)
+  const [sheetId, setSheetId] = useState(initialValues.sheetId)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
   const handleSetup = async () => {
     setError('')
-    
+
     if (!clientId.trim() || !sheetId.trim()) {
       setError('Please fill in both Client ID and Sheet ID')
       return

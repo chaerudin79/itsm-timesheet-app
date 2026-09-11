@@ -16,31 +16,36 @@ const NAV = [
 
 export default function ModernAppLayout({ children }) {
   const { darkMode, toggleDarkMode, disconnect, getActiveAuth, sheetId, isAuthLoading } = useAuth()
-  const { mergeTicketsFromSheets, allTickets } = useSession()
+  const { setSheetsTickets, setLastSheetsSync } = useSession()
   const navigate = useNavigate()
 
   // Auto-load from Sheets on app startup.
   // Guard: tunggu isAuthLoading=false dulu supaya getActiveAuth() tidak throw 'Not authenticated'
   // akibat race dengan silentAuth() yang sedang berjalan di background.
   useEffect(() => {
-    if (isAuthLoading) return
+    if (isAuthLoading || !sheetId) return
+    let isMounted = true
+
     const autoLoadSheetsOnStartup = async () => {
       try {
-        if (!sheetId) return
         const auth = await getActiveAuth()
         const sheetsTickets = await getSheetData(auth.accessToken, sheetId)
 
-        if (sheetsTickets.length > 0 && allTickets.length === 0) {
-          mergeTicketsFromSheets(sheetsTickets)
+        if (isMounted && Array.isArray(sheetsTickets)) {
+          setSheetsTickets(sheetsTickets)
+          setLastSheetsSync(new Date())
         }
       } catch (err) {
         console.error('Auto-load Sheets on startup failed:', err)
       }
     }
 
-    const timer = setTimeout(autoLoadSheetsOnStartup, 500)
-    return () => clearTimeout(timer)
-  }, [isAuthLoading, sheetId, getActiveAuth, mergeTicketsFromSheets, allTickets.length])
+    const timer = setTimeout(autoLoadSheetsOnStartup, 300)
+    return () => {
+      isMounted = false
+      clearTimeout(timer)
+    }
+  }, [isAuthLoading, sheetId, getActiveAuth, setSheetsTickets, setLastSheetsSync])
 
   const handleDisconnect = () => {
     if (confirm('Disconnect from Google Sheets?')) {

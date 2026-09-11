@@ -52,6 +52,9 @@ VITE_GROQ_MODEL=openai/gpt-oss-120b
 VITE_GROQ_TPM_LIMIT=8000
 VITE_GROQ_MAX_OUTPUT_TOKENS=2000
 VITE_GROQ_TPM_BUFFER=500
+VITE_KIMI_API_KEY=your_kimi_key_here
+VITE_KIMI_MODEL=kimi-k2.7-code-highspeed
+VITE_KIMI_MAX_OUTPUT_TOKENS=32768
 VITE_GOOGLE_CLIENT_ID=your_client_id.apps.googleusercontent.com
 VITE_GOOGLE_SHEET_ID=your_google_sheet_id
 ```
@@ -63,6 +66,9 @@ VITE_GOOGLE_SHEET_ID=your_google_sheet_id
 | `VITE_GROQ_TPM_LIMIT` | Batas token per menit yang ditampilkan di UI. |
 | `VITE_GROQ_MAX_OUTPUT_TOKENS` | Batas maksimum token output AI. |
 | `VITE_GROQ_TPM_BUFFER` | Buffer token untuk indikator rate limit. |
+| `VITE_KIMI_API_KEY` | API key Moonshot AI untuk analisis melalui Kimi. |
+| `VITE_KIMI_MODEL` | Model Kimi, default `kimi-k2.7-code-highspeed`. |
+| `VITE_KIMI_MAX_OUTPUT_TOKENS` | Batas output Kimi; gunakan `32768` untuk model K2.7 Code yang memakai reasoning. |
 | `VITE_GOOGLE_CLIENT_ID` | OAuth Client ID untuk aplikasi web. |
 | `VITE_GOOGLE_SHEET_ID` | ID spreadsheet tujuan. |
 

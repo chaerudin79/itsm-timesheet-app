@@ -1,6 +1,6 @@
 import { useMemo, useState, useEffect, useCallback, useRef } from 'react'
 import { motion } from 'framer-motion'
-import { BarChart3, TrendingUp, TrendingDown, Clock, CheckCircle, AlertCircle, ChevronDown, UploadCloud } from 'lucide-react'
+import { BarChart3, TrendingUp, TrendingDown, Clock, CheckCircle, AlertCircle, ChevronDown } from 'lucide-react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useSession } from '../context/SessionContext'
 import { useAuth } from '../context/AuthContext'
@@ -26,35 +26,6 @@ const itemVariants = {
 }
 
 const REALTIME_SYNC_INTERVAL_MS = 30000
-
-function mergeSheetsWithLocal(sheetsTickets, localTickets) {
-  const keyFor = (ticket) => [
-    ticket.problem,
-    ticket.requester,
-    ticket.date,
-    ticket.action,
-    ticket.type,
-  ].map(value => String(value || '').trim().toLowerCase()).join('|')
-
-  // Keep local-only tickets visible until they have been synced to Sheets.
-  const sheetsCounts = new Map()
-  sheetsTickets.forEach(ticket => {
-    const key = keyFor(ticket)
-    sheetsCounts.set(key, (sheetsCounts.get(key) || 0) + 1)
-  })
-
-  const unsyncedLocalTickets = localTickets.filter(ticket => {
-    const key = keyFor(ticket)
-    const remaining = sheetsCounts.get(key) || 0
-    if (remaining > 0) {
-      sheetsCounts.set(key, remaining - 1)
-      return false
-    }
-    return true
-  })
-
-  return [...sheetsTickets, ...unsyncedLocalTickets]
-}
 
 function startOfWeek(date) {
   const d = new Date(date.getFullYear(), date.getMonth(), date.getDate())
@@ -249,14 +220,12 @@ function Sparkline({ data, color, valueFormatter }) {
 
 export default function ModernDashboard() {
   const navigate = useNavigate()
-  const { allTickets } = useSession()
-  const { isAuthLoading } = useAuth()
-  const { loadSheetsData, auditLocalVsSheets, syncMissingTickets } = useSheetsSync()
+  const { allTickets, sheetsTickets, setSheetsTickets, lastSheetsSync, setLastSheetsSync } = useSession()
+  const { isAuthLoading, sheetId } = useAuth()
+  const { loadSheetsData } = useSheetsSync()
   const [showImportModal, setShowImportModal] = useState(false)
-  const [displayTickets, setDisplayTickets] = useState(allTickets)
-  const [lastSheetsSync, setLastSheetsSync] = useState(null)
-  const [sheetAudit, setSheetAudit] = useState(null)
-  const [syncMissingStatus, setSyncMissingStatus] = useState('idle')
+  const [displayTickets, setDisplayTickets] = useState(() => sheetsTickets || allTickets)
+  const [isRefreshing, setIsRefreshing] = useState(false)
   const [dateRange, setDateRange] = useState('all') // 'all', 'week', 'month', '3months', 'custom'
   const [customStartDate, setCustomStartDate] = useState('')
   const [customEndDate, setCustomEndDate] = useState('')
@@ -271,79 +240,68 @@ export default function ModernDashboard() {
   const [searchParams, setSearchParams] = useSearchParams()
   const [siteDropdownOpen, setSiteDropdownOpen] = useState(false)
   const [dropdownSearch, setDropdownSearch] = useState('')
-  const hasRunInitialSheetAudit = useRef(false)
 
   const loadRealtimeSheetsData = useCallback(async () => {
-    const sheetsTickets = await loadSheetsData()
-    const audit = await auditLocalVsSheets(allTickets, sheetsTickets)
-    setSheetAudit(audit)
-    setDisplayTickets(mergeSheetsWithLocal(sheetsTickets, allTickets))
-    setLastSheetsSync(new Date())
-  }, [allTickets, auditLocalVsSheets, loadSheetsData])
+    if (!sheetId) return
+    try {
+      const freshTickets = await loadSheetsData()
+      if (Array.isArray(freshTickets)) {
+        setSheetsTickets(freshTickets)
+        setDisplayTickets(freshTickets)
+        if (setLastSheetsSync) setLastSheetsSync(new Date())
+      }
+    } catch (err) {
+      console.error('Realtime Sheets sync failed:', err)
+    }
+  }, [sheetId, loadSheetsData, setSheetsTickets, setLastSheetsSync])
 
-  // Auto-load from Sheets after local sessions are available.
-  // Guard: tunggu isAuthLoading=false supaya tidak race dengan silentAuth().
+  // Initial load when auth is ready and sheetId is available
   useEffect(() => {
-    if (isAuthLoading || hasRunInitialSheetAudit.current || allTickets.length === 0) return
-    hasRunInitialSheetAudit.current = true
+    if (isAuthLoading || !sheetId) return
+    loadRealtimeSheetsData()
+  }, [isAuthLoading, sheetId, loadRealtimeSheetsData])
 
-    const autoLoadSheets = async () => {
-      try {
-        await loadRealtimeSheetsData()
-      } catch (err) {
-        console.error('Auto-load Sheets failed:', err)
+  // Real-time polling & window focus/visibility sync
+  useEffect(() => {
+    if (!sheetId) return
+
+    const timer = setInterval(() => {
+      loadRealtimeSheetsData()
+    }, REALTIME_SYNC_INTERVAL_MS)
+
+    let lastFocusFetch = 0
+    const handleFocus = () => {
+      const now = Date.now()
+      if (now - lastFocusFetch > 5000) {
+        lastFocusFetch = now
+        loadRealtimeSheetsData()
       }
     }
 
-    autoLoadSheets()
-  }, [isAuthLoading, allTickets.length, loadRealtimeSheetsData])
+    window.addEventListener('focus', handleFocus)
+    document.addEventListener('visibilitychange', handleFocus)
 
+    return () => {
+      clearInterval(timer)
+      window.removeEventListener('focus', handleFocus)
+      document.removeEventListener('visibilitychange', handleFocus)
+    }
+  }, [sheetId, loadRealtimeSheetsData])
+
+  // Keep displayTickets synchronized with sheetsTickets or allTickets
   useEffect(() => {
-    if (allTickets.length === 0) return
-
-    const timer = setInterval(() => {
-      loadRealtimeSheetsData().catch(err => {
-        console.error('Realtime Sheets sync failed:', err)
-      })
-    }, REALTIME_SYNC_INTERVAL_MS)
-
-    return () => clearInterval(timer)
-  }, [allTickets.length, loadRealtimeSheetsData])
-
-  // Update display when local data changes
-  useEffect(() => {
-    setDisplayTickets(prev => {
-      if (lastSheetsSync) return mergeSheetsWithLocal(prev, allTickets)
-      return allTickets
-    })
-  }, [allTickets, lastSheetsSync])
+    setDisplayTickets(sheetsTickets !== null ? sheetsTickets : allTickets)
+  }, [sheetsTickets, allTickets])
 
   // Refresh data from Sheets
   const handleRefreshSheets = async () => {
+    setIsRefreshing(true)
     try {
       await loadRealtimeSheetsData()
     } catch (err) {
       console.error('Refresh failed:', err)
-    }
-  }
-
-  const handleSyncMissingTickets = async () => {
-    setSyncMissingStatus('syncing')
-    try {
-      const result = await syncMissingTickets(allTickets)
-      setSheetAudit({
-        localCount: result.localCount,
-        sheetsCount: result.sheetsCount + result.appended,
-        missingTickets: [],
-        missingCount: 0,
-      })
-      setLastSheetsSync(new Date())
-      await loadRealtimeSheetsData()
-      setSyncMissingStatus('synced')
-      setTimeout(() => setSyncMissingStatus('idle'), 3000)
-    } catch (err) {
-      console.error('Sync missing tickets failed:', err)
-      setSyncMissingStatus('error')
+    } finally {
+      setIsRefreshing(false)
     }
   }
 
@@ -688,46 +646,6 @@ export default function ModernDashboard() {
           <h1 className="text-[28px] font-semibold text-white tracking-tight mb-1">ITSM NAC Operations Dashboard</h1>
           <p className="text-slate-500 text-[13px]">{stats.open.toLocaleString()} Open Tickets require attention &bull; {dateRange === 'all' ? 'All time' : dateRange === '3months' ? 'Last 3 months' : dateRange === 'week' ? 'Last week' : dateRange === 'month' ? 'Last month' : dateRange === 'year' ? 'Last year' : 'Custom period'}</p>
         </motion.div>
-
-        {sheetAudit?.missingCount > 0 && (
-          <motion.div
-            className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-lg border border-amber-500/20 bg-amber-500/[0.06] px-4 py-3.5"
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
-            <div className="flex items-start gap-3">
-              <AlertCircle className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
-              <div>
-                <p className="text-[13px] font-medium text-amber-300">
-                  {sheetAudit.missingCount} local ticket belum ada di Google Sheets
-                </p>
-                <p className="text-xs text-slate-400 mt-0.5">
-                  Local: {sheetAudit.localCount} tiket, Google Sheets: {sheetAudit.sheetsCount} tiket.
-                </p>
-              </div>
-            </div>
-            <button
-              onClick={handleSyncMissingTickets}
-              disabled={syncMissingStatus === 'syncing'}
-              className="inline-flex items-center justify-center gap-2 rounded-md bg-[var(--brand-orange)] px-3.5 py-1.5 text-xs font-semibold text-white hover:bg-[var(--brand-orange-hover)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              <UploadCloud className="w-3.5 h-3.5" />
-              {syncMissingStatus === 'syncing' ? 'Syncing...' : `Sync ${sheetAudit.missingCount} Missing`}
-            </button>
-          </motion.div>
-        )}
-
-        {syncMissingStatus === 'synced' && (
-          <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/[0.06] px-4 py-3 text-[13px] font-medium text-emerald-300">
-            Missing tickets berhasil dikirim ke Google Sheets.
-          </div>
-        )}
-
-        {syncMissingStatus === 'error' && (
-          <div className="rounded-lg border border-red-500/20 bg-red-500/[0.06] px-4 py-3 text-[13px] font-medium text-red-300">
-            Gagal sync missing tickets. Coba refresh koneksi Google Sheets lalu ulangi.
-          </div>
-        )}
 
         {/* Filter controls row */}
         <motion.div

@@ -21,6 +21,8 @@ const itemVariants = {
 export default function ModernSettingsPage() {
   const { darkMode, toggleDarkMode, customRules, updateCustomRules, sheetId, disconnect } = useAuth()
   const [groqApiKeys, setGroqApiKeys] = useState(() => localStorage.getItem('groqApiKeys') || localStorage.getItem('groqApiKey') || '')
+  const [analysisProvider, setAnalysisProvider] = useState(() => localStorage.getItem('analysisProvider') || 'groq')
+  const [kimiApiKey, setKimiApiKey] = useState(() => localStorage.getItem('kimiApiKey') || '')
   const [showModal, setShowModal] = useState(false)
   const [showApiKey, setShowApiKey] = useState(false)
   const [copied, setCopied] = useState(false)
@@ -150,9 +152,26 @@ export default function ModernSettingsPage() {
             initial="hidden"
             animate="visible"
           >
-            <motion.h2 className="text-[13px] font-semibold text-slate-400 uppercase tracking-wide" variants={itemVariants}>
+          <motion.h2 className="text-[13px] font-semibold text-slate-400 uppercase tracking-wide" variants={itemVariants}>
               AI Configuration
             </motion.h2>
+
+            <motion.div className="rounded-lg border border-white/[0.07] bg-[#111113] p-5" variants={itemVariants}>
+              <label className="block font-medium text-white text-sm mb-1" htmlFor="analysis-provider">AI Provider</label>
+              <p className="text-sm text-slate-500 mb-3">Provider yang digunakan saat menganalisis chat berikutnya.</p>
+              <select
+                id="analysis-provider"
+                value={analysisProvider}
+                onChange={(e) => {
+                  setAnalysisProvider(e.target.value)
+                  localStorage.setItem('analysisProvider', e.target.value)
+                }}
+                className="w-full px-3 py-2 bg-[#0A0A0B] border border-white/10 rounded-md text-white text-sm focus:outline-none focus:border-[#06B6D4]/60"
+              >
+                <option value="groq">Groq</option>
+                <option value="kimi">Kimi (Moonshot AI)</option>
+              </select>
+            </motion.div>
 
             {/* Custom Rules */}
             <motion.div className="rounded-lg border border-white/[0.07] bg-[#111113] p-5" variants={itemVariants}>
@@ -201,6 +220,38 @@ export default function ModernSettingsPage() {
                 {groqApiKeys && (
                   <p className="text-xs text-amber-400/80 flex items-center gap-1.5">
                     <span aria-hidden="true">⚠</span> API key disimpan di browser. Jangan gunakan di komputer bersama.
+                  </p>
+                )}
+              </div>
+            </motion.div>
+
+            <motion.div className="rounded-lg border border-white/[0.07] bg-[#111113] p-5" variants={itemVariants}>
+              <div className="space-y-3">
+                <div>
+                  <p className="font-medium text-white text-sm mb-1">Kimi API Key</p>
+                  <p className="text-sm text-slate-500">Untuk provider Kimi. Model: <code>kimi-k2.7-code-highspeed</code></p>
+                </div>
+                <div className="relative">
+                  <input
+                    type={showApiKey ? 'text' : 'password'}
+                    value={kimiApiKey}
+                    onChange={(e) => {
+                      setKimiApiKey(e.target.value)
+                      localStorage.setItem('kimiApiKey', e.target.value)
+                    }}
+                    placeholder="Paste your Kimi API key"
+                    className="w-full px-3 py-2 pr-14 bg-[#0A0A0B] border border-white/10 rounded-md text-white text-sm placeholder-slate-500 focus:outline-none focus:border-[#06B6D4]/60"
+                  />
+                  <button
+                    onClick={() => setShowApiKey(!showApiKey)}
+                    className="absolute right-3 top-3 text-slate-400 hover:text-slate-200 text-xs font-medium transition-colors"
+                  >
+                    {showApiKey ? 'Hide' : 'Show'}
+                  </button>
+                </div>
+                {kimiApiKey && (
+                  <p className="text-xs text-amber-400/80 flex items-center gap-1.5">
+                    <span aria-hidden="true">âš </span> API key disimpan di browser. Jangan gunakan di komputer bersama.
                   </p>
                 )}
               </div>

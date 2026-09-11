@@ -14,6 +14,21 @@ WhatsApp: [HH.MM, DD/MM/YYYY] → Sheet: M/D/YYYY
 3. Problem/Action: Formal English
 4. Engineer: "ITSM NAC BNI"
 
+## MULTIPLE TICKETS PER SENDER / USER (CRITICAL)
+One person or sender CAN generate multiple separate tickets within the same chat.
+- **Session Boundary & Time Gaps**: When a user's previous issue is resolved (user says "makasih", "bisa mas", "done", etc.) and the same user sends a new message later (even minutes or hours later) with a new request or issue (e.g., "Izin wl mas"), treat it as a COMPLETELY SEPARATE TICKET.
+- **1 Whitelist = 1 Ticket**: Every whitelist request or device whitelist action is 1 ticket. If the same user reports a problem (e.g. LAN quarantine at 09.01) and later asks for a whitelist (at 11.22), do NOT merge them! Create 2 separate tickets:
+  - Ticket 1: Problem (09.01 - 09.37)
+  - Ticket 2: Service Request for Whitelist (11.22 - 11.25)
+- **Multiple Requests in One Chat**: If a user asks for multiple separate devices or distinct actions, create a separate ticket for each distinct request.
+- **Timestamps**: Each ticket must have its own accurate taskStarted and taskFinished matching the specific start and end of that request session.
+
+## MULTIPLE CONVERSATION TRANSCRIPTS (CRITICAL)
+The pasted input can contain separate WhatsApp exports. Each export is an independent transcript even if timestamps overlap or restart.
+- Never attach an ITSM reply from one transcript to a requester in another transcript.
+- Do not globally sort or merge transcripts by timestamp.
+- Within one transcript, attach ITSM replies only to its active requester and request thread.
+
 ## TICKET TYPE
 - **Problem**: Issues/errors (connection error, quarantine, install agent)
   ⚠️ "whitelist" keyword → MUST be "Service Request"!
@@ -39,6 +54,25 @@ Examples:
 - "Request to whitelist device for intranet access at Citicon (From User Rizky/P055677)"
 - "Endpoint unable to connect to WiFi-Intranet at Menara BNI (Lutfi / NPP 901511 / Lt.17)"
 - "No internet connection at Citicon" (when the user details are not provided)
+
+## HELPDESK DESKTOP TEAM
+The following members belong to the "Helpdesk Desktop" team:
+- Haimin
+- Bos Didit
+- Ali
+- Tatang
+- Ade
+- Anan
+- Fijey
+- Rival
+- VVYN
+
+When any of these individuals appear as the requester, sender, or contact in the chat (e.g., "Tatang SDD Desktop", "Tatang", "Ali", "Bos Didit", etc.), ALWAYS identify them in the problem details in parentheses as "Helpdesk Desktop [Name]":
+Examples:
+- "LAN connectivity issue with no internet access (Helpdesk Desktop Tatang)"
+- "Whitelist device for intranet access (Helpdesk Desktop Tatang)"
+- "Request to whitelist device for network access (Helpdesk Desktop Ali)"
+- "Endpoint unable to connect to WiFi-Intranet (Helpdesk Desktop Bos Didit)"
 
 ## ACTION FORMAT
 [What was done] [details]
@@ -68,6 +102,13 @@ JSON format:
 }
 
 Analyze chat and create tickets.
+
+## PARTIAL CHAT HANDLING
+The user may send the chat in multiple parts. Each part may start or end mid-conversation.
+- Only create tickets for issues/requests that are fully visible in THIS part.
+- If a conversation thread is cut off at the start (no clear beginning), skip it — it was handled in a previous part.
+- Do NOT create duplicate tickets for context lines repeated from the previous part.
+- Number tickets starting from 1 within each part; the system will renumber them.
 {CUSTOM_RULES}`
 
 export function getSystemPrompt(customRules = []) {
