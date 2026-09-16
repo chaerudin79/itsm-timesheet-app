@@ -2,118 +2,94 @@ import { useState } from 'react'
 import { Loader2 } from 'lucide-react'
 import { safeGetItem } from '../lib/storageUtils'
 
-function getStoredSetupValues() {
-  const authMeta = safeGetItem('googleAuth')
-  const storedClientId = authMeta?.clientId || import.meta.env.VITE_GOOGLE_CLIENT_ID || ''
-  const storedSheetId = safeGetItem('sheetId') || import.meta.env.VITE_GOOGLE_SHEET_ID || ''
-
-  return {
-    clientId: storedClientId,
-    sheetId: storedSheetId,
-  }
+function getStoredSheetId() {
+  return safeGetItem('sheetId') || import.meta.env.VITE_GOOGLE_SHEET_ID || ''
 }
 
 export default function GoogleSheetsModal({ onSetup }) {
-  const initialValues = getStoredSetupValues()
-  const [clientId, setClientId] = useState(initialValues.clientId)
-  const [sheetId, setSheetId] = useState(initialValues.sheetId)
+  const [username, setUsername] = useState('')
+  const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
   const handleSetup = async () => {
     setError('')
 
-    if (!clientId.trim() || !sheetId.trim()) {
-      setError('Please fill in both Client ID and Sheet ID')
+    if (username !== 'admin' || password !== 'password') {
+      setError('Invalid username or password')
       return
     }
 
     setLoading(true)
     try {
-      await onSetup(clientId, sheetId)
+      await onSetup(getStoredSheetId())
     } catch (err) {
-      setError(err.message || 'Setup failed')
+      setError(err.message || 'Login failed')
       setLoading(false)
     }
   }
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-white dark:bg-slate-950">
-      <div className="card p-8 w-full max-w-md">
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-50 mb-2">
+    <div className="flex items-center justify-center min-h-screen bg-[#0A0A0B] text-white">
+      <div className="p-8 w-full max-w-md bg-[#111113] border border-white/[0.06] rounded-xl shadow-2xl">
+        <h1 className="text-2xl font-bold text-white mb-2 text-center">
           ITSM NAC Timesheet
         </h1>
-        <p className="text-slate-600 dark:text-slate-400 mb-6">
-          Setup Google Sheets untuk menyimpan tiket
+        <p className="text-slate-400 mb-8 text-center text-sm">
+          Login Administrator
         </p>
 
-        <div className="space-y-4">
-          {/* Instructions */}
-          <div className="text-xs text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 p-3 rounded">
-            <p className="font-semibold mb-2">Setup Guide:</p>
-            <ol className="list-decimal list-inside space-y-1">
-              <li>Buat Google Sheet kosong di sheets.google.com</li>
-              <li>Copy Sheet ID dari URL</li>
-              <li>Setup OAuth di Google Cloud Console</li>
-              <li>Copy Client ID dari credentials</li>
-            </ol>
-          </div>
-
-          {/* Client ID Input */}
+        <div className="space-y-5">
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-              Google OAuth Client ID
+            <label className="block text-sm font-medium text-slate-300 mb-2">
+              Username
             </label>
             <input
               type="text"
-              value={clientId}
-              onChange={(e) => setClientId(e.target.value)}
-              placeholder="123456789-abc...apps.googleusercontent.com"
-              className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-50 placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="admin"
+              className="w-full px-3 py-2 border border-white/10 rounded-lg bg-[#0A0A0B] text-white placeholder-slate-500 focus:outline-none focus:border-[#06B6D4]/60 transition-colors"
             />
           </div>
 
-          {/* Sheet ID Input */}
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-              Google Sheet ID
+            <label className="block text-sm font-medium text-slate-300 mb-2">
+              Password
             </label>
             <input
-              type="text"
-              value={sheetId}
-              onChange={(e) => setSheetId(e.target.value)}
-              placeholder="1a2b3c4d5e6f..."
-              className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-50 placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') handleSetup()
+              }}
+              className="w-full px-3 py-2 border border-white/10 rounded-lg bg-[#0A0A0B] text-white placeholder-slate-500 focus:outline-none focus:border-[#06B6D4]/60 transition-colors"
             />
           </div>
 
-          {/* Error Message */}
           {error && (
-            <div className="p-3 bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-100 rounded text-sm">
+            <div className="p-3 bg-red-500/10 border border-red-500/20 text-red-400 rounded-lg text-sm">
               {error}
             </div>
           )}
 
-          {/* Setup Button */}
           <button
             onClick={handleSetup}
             disabled={loading}
-            className="w-full btn-primary disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            className="w-full py-2.5 px-4 bg-white text-black hover:bg-slate-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 rounded-lg font-medium transition-colors mt-2"
           >
             {loading ? (
               <>
                 <Loader2 size={18} className="animate-spin" />
-                <span>Authenticating...</span>
+                <span>Logging in...</span>
               </>
             ) : (
-              'Authenticate with Google'
+              'Login'
             )}
           </button>
         </div>
-
-        <p className="text-xs text-slate-500 dark:text-slate-400 mt-4 text-center">
-          Your credentials will be saved locally in browser storage
-        </p>
       </div>
     </div>
   )

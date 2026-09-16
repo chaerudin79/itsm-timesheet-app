@@ -24,6 +24,7 @@ export default function ImportFromSheetsModal({ isOpen, onClose }) {
       }, 500)
     } catch (err) {
       console.error('Import failed:', err)
+      alert(`Import failed: ${err.message}`)
     }
   }
 

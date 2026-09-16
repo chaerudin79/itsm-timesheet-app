@@ -41,25 +41,10 @@ Example: "Request to whitelist device for network access (Helpdesk Desktop Ali)"
 
 ## 6. STANDARDIZED CLASSIFICATION & PHRASING
 
-**CRITICAL ACTION RULES (ZERO TOLERANCE):**
-1. The exact string "Support Troubleshoot" is STRICTLY FORBIDDEN in the "action" field.
-2. If you output "action": "Support Troubleshoot", the ticket is INVALID and will be REJECTED.
-3. "Support Troubleshoot" belongs ONLY in the "remarks" field.
-4. When the chat transcript does NOT explicitly mention what technical step was performed, you MUST use the Deterministic Action Fallback Table below.
-
-## DETERMINISTIC ACTION FALLBACK TABLE
-When the chat does NOT state the solution explicitly, SELECT the appropriate action from this table based on problem keywords:
-
-| Problem Keyword/Context | Mandatory Action | Remarks |
-|------------------------|------------------|---------|
-| "unable to get IP" / "169.254" / "DHCP" / "VLAN 3030" | "Instructed user to forget SSID and reconnect to WiFi-Intranet" | "Support Troubleshoot" |
-| "quarantined" / "quarantine" | "Applied temporary whitelist to allow network access and verified IP lease" | "Support Troubleshoot" |
-| "OnGuard" / "ClearPass agent" / "agent not running" | "Provided ClearPass OnGuard installer and guided reinstallation" | "Support Troubleshoot" |
-| "authentication failed" / "EAP" / "802.1X" / "certificate" | "Unchecked server certificate validation and changed authentication method to 'Authenticate as computer'" | "Support Troubleshoot" |
-| "no internet" / "cannot connect" (via LAN) | "Guided user to reconnect network cable and restart network adapter" | "Support Troubleshoot" |
-| "whitelist" / "buka akses" (Service Request) | "The device has been whitelisted." | "Support Troubleshoot" |
-| Status is OPEN (ongoing issue) | "Investigating IP assignment and assisting user with remote network troubleshooting" | "Follow up required" |
-| "account lock" / "MFA" / "password reset" / "AD" | "Redirected user to AD/MFA team and provided contact" | "Support Troubleshoot" |
+**CRITICAL ACTION RULES:**
+- `action` field MUST be a detailed technical step (e.g., "Instructed user to restart network adapter and renew DHCP lease").
+- `remarks` field MUST be the category (e.g., "Support Troubleshoot", "Follow up required", "Escalated to Helpdesk Desktop").
+- `action` and `remarks` MUST have completely different values. If unsure of the action for an IP issue, use "Instructed user to reconnect to WiFi-Intranet".
 
 ### A. IP Address & DHCP Issues
 Triggers: 169.254.x.x, cannot get IP, VLAN 3030 issues.
@@ -138,40 +123,21 @@ Standard Action:
 - Default: "CLOSED"
 - Use "OPEN" ONLY when: The ticket requires user follow-up, pending CrowdStrike verification, or device still has not received an IP address / ongoing remote session. (Remarks: "Follow up required")
 
-## VALIDATION CHECKLIST (Execute before generating JSON)
-Before outputting tickets, verify EVERY ticket passes these checks:
-- "action" does NOT contain "Support Troubleshoot"
-- "action" must differ from "remarks" (completely different values)
-- "remarks" is NOT empty or null
-- "action" matches one of the patterns from the Deterministic Fallback Table or the explicit chat solution
-- Date format is M/D/YYYY (not MM/DD or DD/MM)
-
 ## OUTPUT FORMAT
 1. First line: Indonesian summary
 2. Second line: Summary by type
-3. JSON block: Tickets in JSON wrapped in triple-backtick json code block
+3. JSON block: Tickets in JSON wrapped in ```json ... ```
 
-Example tickets in JSON array format:
-[
-  {
-    "no": 1, "source": "WhatsApp", "type": "Problem",
-    "requester": "User - Menara BNI", "period": "September", "year": 2026,
-    "problem": "Endpoint unable to get IP Address at Menara BNI (Helpdesk Desktop Rival)",
-    "action": "Instructed user to forget SSID and reconnect to WiFi-Intranet",
-    "date": "9/11/2026", "taskStarted": "9/11/2026 10:27",
-    "taskFinished": "9/11/2026 11:09", "resolutionTime": "0:42:00",
-    "status": "CLOSED", "engineer": "ITSM NAC BNI", "remarks": "Support Troubleshoot"
-  },
-  {
-    "no": 2, "source": "WhatsApp", "type": "Problem",
-    "requester": "User - BNI", "period": "September", "year": 2026,
-    "problem": "Account locked for NPP Fadly (From User Tommy)",
-    "action": "Redirected user to AD/MFA team and provided contact",
-    "date": "9/11/2026", "taskStarted": "9/11/2026 12:43",
-    "taskFinished": "9/11/2026 12:49", "resolutionTime": "0:06:00",
-    "status": "CLOSED", "engineer": "ITSM NAC BNI", "remarks": "Support Troubleshoot"
-  }
-]
+JSON format:
+{
+  "no": 1, "source": "WhatsApp", "type": "Problem",
+  "requester": "User - Menara BNI", "period": "July", "year": 2026,
+  "problem": "Endpoint unable to get IP Address at Menara BNI (Alit Darmawan / Lt.12)",
+  "action": "Instructed user to restart network adapter and renew DHCP lease",
+  "date": "7/2/2026", "taskStarted": "7/2/2026 09:30",
+  "taskFinished": "7/2/2026 10:15", "resolutionTime": "0:45:00",
+  "status": "CLOSED", "engineer": "ITSM NAC BNI", "remarks": "Support Troubleshoot"
+}
 
 ## PARTIAL CHAT HANDLING
 - Only create tickets fully visible in THIS part. Do NOT invent tickets for partial context. Number tickets starting from 1.

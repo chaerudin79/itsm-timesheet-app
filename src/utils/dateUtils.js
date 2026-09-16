@@ -11,13 +11,15 @@ export function parseTicketDate(str) {
 }
 
 /**
- * Format a Date to M/D/YYYY
+ * Format a Date to MM/DD/YYYY
  */
 export function formatDate(date) {
   if (!date) return ''
   const d = date instanceof Date ? date : new Date(date)
   if (isNaN(d.getTime())) return ''
-  return `${d.getMonth() + 1}/${d.getDate()}/${d.getFullYear()}`
+  const month = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${month}/${day}/${d.getFullYear()}`
 }
 
 /**

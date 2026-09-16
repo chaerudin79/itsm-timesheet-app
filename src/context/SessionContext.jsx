@@ -10,14 +10,21 @@ export function SessionProvider({ children }) {
   const [lastSheetsSync, setLastSheetsSync] = useState(null)
   useEffect(() => {
     const loaded = validateSessions(safeGetItem('sessions', []))
-    setSessions(loaded)
+    
+    // ponytail: clear old sessions if containing NPP requesters
+    const cleanedSessions = loaded.map(session => ({
+      ...session,
+      tickets: (session.tickets || []).filter(t => !/^\d{5,6}$/.test(t.requester))
+    }))
+    
+    setSessions(cleanedSessions)
 
     // Auto-select: prefer sheets-import if it has tickets, else first session
-    const sheetsSession = loaded.find(s => s.id === 'sheets-import')
+    const sheetsSession = cleanedSessions.find(s => s.id === 'sheets-import')
     if (sheetsSession?.tickets?.length > 0) {
       setActiveSessionId('sheets-import')
-    } else if (loaded.length > 0) {
-      setActiveSessionId(loaded[0].id)
+    } else if (cleanedSessions.length > 0) {
+      setActiveSessionId(cleanedSessions[0].id)
     }
   }, [])
 

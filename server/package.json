@@ -1,0 +1,17 @@
+{
+  "name": "itsm-timesheet-backend",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Backend proxy that talks to Google Sheets via a Service Account, so the frontend never needs a Google login popup.",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node --watch index.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "googleapis": "^180.0.0"
+  }
+}

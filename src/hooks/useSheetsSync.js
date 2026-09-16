@@ -35,27 +35,30 @@ function findMissingLocalTickets(localTickets = [], sheetsTickets = []) {
  * Provides: loading, error, importedTickets, loadSheetsData, importTickets
  */
 export function useSheetsSync() {
-  const { getActiveAuth, sheetId } = useAuth()
+  const { sheetId } = useAuth()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [importedTickets, setImportedTickets] = useState([])
 
   const loadSheetsData = useCallback(async () => {
-    if (!sheetId) return []
+    if (!sheetId) {
+      const msg = 'Sheet ID is missing. Please configure it in Settings.'
+      setError(msg)
+      throw new Error(msg)
+    }
     setLoading(true)
     setError(null)
     try {
-      const auth = await getActiveAuth()
-      const tickets = await getSheetData(auth.accessToken, sheetId)
+      const tickets = await getSheetData(sheetId)
       return tickets
     } catch (err) {
       console.error('Failed to load Sheets data:', err)
-      setError('Failed to read Google Sheets')
-      return []
+      setError(err.message || 'Failed to read Google Sheets')
+      throw err // <--- Don't return empty array, throw so caller knows it failed
     } finally {
       setLoading(false)
     }
-  }, [sheetId, getActiveAuth])
+  }, [sheetId])
 
   const importTickets = useCallback(async (existingTickets = []) => {
     const sheetsTickets = await loadSheetsData()
@@ -89,10 +92,9 @@ export function useSheetsSync() {
     const audit = await auditLocalVsSheets(localTickets)
     if (audit.missingTickets.length === 0) return { ...audit, appended: 0 }
 
-    const auth = await getActiveAuth()
-    const result = await appendTicketsToSheet(audit.missingTickets, auth.accessToken, sheetId)
+    const result = await appendTicketsToSheet(audit.missingTickets, sheetId)
     return { ...audit, appended: result.appended || audit.missingTickets.length }
-  }, [auditLocalVsSheets, getActiveAuth, sheetId])
+  }, [auditLocalVsSheets, sheetId])
 
   return {
     loading,

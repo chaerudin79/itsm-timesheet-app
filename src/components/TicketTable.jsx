@@ -7,24 +7,33 @@ const getConfidenceStatus = (ticket) => {
   if (!ticket.problem?.trim() || !ticket.action?.trim()) {
     return 'FAILED'
   }
-  
+
   const validRequesters = [
+    'Anugra - BNI',
+    'Helpdesk Desktop',
+    'ITSM Backbone SDD',
+    'NPS - ITSM Network Security',
+    'Tegar - BNI',
+    'Tommy - CISO BNI',
+    'User - BNI',
+    'User - BNI Sarinah',
+    'User - BNU Slipi',
     'User - Menara BNI',
-    'User - Plaza BNI',
+    'User - Plaza BNI BSD',
     'User - BNI Citicon',
     'User - Grha BNI',
     'User - BNI RDTX'
   ]
   const validTypes = TICKET_TYPES
-  
+
   const hasValidRequester = validRequesters.includes(ticket.requester)
   const hasValidType = validTypes.includes(ticket.type)
   const hasValidDate = ticket.date && ticket.date !== '-' && !ticket.date.includes('unknown')
-  
+
   if (!hasValidRequester || !hasValidType || !hasValidDate) {
     return 'REVIEW'
   }
-  
+
   return 'HIGH'
 }
 
@@ -47,7 +56,7 @@ export default function TicketTable({ tickets, onUpdateTickets, onApproveTickets
     searchTimeoutRef.current = setTimeout(() => {
       setDebouncedSearch(searchText)
     }, 300)
-    
+
     return () => {
       if (searchTimeoutRef.current) {
         clearTimeout(searchTimeoutRef.current)
@@ -71,13 +80,13 @@ export default function TicketTable({ tickets, onUpdateTickets, onApproveTickets
       const appA = a.approved === true ? 1 : 0
       const appB = b.approved === true ? 1 : 0
       if (appA !== appB) return appA - appB
-      
+
       const confA = getConfidenceStatus(a)
       const confB = getConfidenceStatus(b)
       const scoreA = score[confA] || 1
       const scoreB = score[confB] || 1
       if (scoreA !== scoreB) return scoreB - scoreA
-      
+
       return (a.no || 0) - (b.no || 0)
     })
   }, [filteredTickets])
@@ -123,7 +132,7 @@ export default function TicketTable({ tickets, onUpdateTickets, onApproveTickets
 
     const updated = [...tickets]
     updated[ticketIdx][fieldName] = editValue.trim()
-    
+
     // Recalculate confidence / clean up
     onUpdateTickets(updated)
     setEditingCell(null)
@@ -179,7 +188,7 @@ export default function TicketTable({ tickets, onUpdateTickets, onApproveTickets
         <div className="text-sm font-semibold text-slate-300">
           Status Peninjauan: <span className="text-[#06B6D4]">{approvedCount}</span> dari <span className="text-white">{tickets.length}</span> tiket disetujui
         </div>
-        
+
         {unapprovedTickets.length > 0 && (
           <div className="flex items-center gap-3">
             <button
@@ -292,7 +301,7 @@ export default function TicketTable({ tickets, onUpdateTickets, onApproveTickets
                 const conf = getConfidenceStatus(ticket)
                 const isExpanded = expandedNoSet.has(ticket.no)
                 const isApproved = ticket.approved === true
-                
+
                 // Set left border and bg depending on confidence & approval
                 let rowStyle = 'hover:bg-slate-900/10'
                 if (!isApproved) {
@@ -445,7 +454,7 @@ export default function TicketTable({ tickets, onUpdateTickets, onApproveTickets
                                 <p className="bg-slate-950/50 p-3 rounded-lg border border-slate-800 text-[13px] whitespace-pre-wrap text-white leading-relaxed">{ticket.action || '-'}</p>
                               </div>
                             </div>
-                            
+
                             <div className="bg-slate-950/30 p-4 rounded-xl border border-slate-800/80 space-y-2">
                               <span className="font-bold text-slate-400 block border-b border-slate-800 pb-1.5 mb-2 uppercase tracking-wider text-[10px]">Metadata Tiket</span>
                               <div className="flex justify-between">

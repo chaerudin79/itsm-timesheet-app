@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { SessionProvider } from './context/SessionContext'
+import { SheetsDataProvider } from './context/SheetsDataProvider'
 import ErrorBoundary from './components/ErrorBoundary'
 import GoogleSheetsModal from './components/GoogleSheetsModal'
 import ModernAppLayout from './components/ModernAppLayout'
@@ -18,15 +19,17 @@ function AppRoutes() {
 
   return (
     <SessionProvider>
-      <ModernAppLayout>
-        <Routes>
-          <Route path="/" element={<ModernDashboardPage />} />
-          <Route path="/analyzer" element={<ModernAnalyzerPage />} />
-          <Route path="/history" element={<ModernHistoryPage />} />
-          <Route path="/settings" element={<ModernSettingsPage />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </ModernAppLayout>
+      <SheetsDataProvider>
+        <ModernAppLayout>
+          <Routes>
+            <Route path="/" element={<ModernDashboardPage />} />
+            <Route path="/analyzer" element={<ModernAnalyzerPage />} />
+            <Route path="/history" element={<ModernHistoryPage />} />
+            <Route path="/settings" element={<ModernSettingsPage />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </ModernAppLayout>
+      </SheetsDataProvider>
     </SessionProvider>
   )
 }

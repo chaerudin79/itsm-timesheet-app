@@ -58,6 +58,61 @@ function fixDateTime(dateTimeStr) {
   return `${fixedDate} ${timePart}`
 }
 
+function padSheetDate(dateStr) {
+  const match = dateStr?.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/)
+  if (!match) return dateStr
+  return `${match[1].padStart(2, '0')}/${match[2].padStart(2, '0')}/${match[3]}`
+}
+
+function padSheetTime(timeStr) {
+  const match = timeStr?.match(/^(\d{1,2}):(\d{2})(.*)$/)
+  if (!match) return timeStr
+  return `${match[1].padStart(2, '0')}:${match[2]}${match[3]}`
+}
+
+function isSensitiveProblemMetadata(segment = '') {
+  const normalized = segment.trim()
+  if (!normalized) return false
+
+  return /(?:^|\s)(?:NPP|Host(?:name)?|PC\s*Name|Computer\s*Name)(?:\s*[:\-])?/i.test(normalized)
+    || /(?:^|\s)P\d{5,7}\b/i.test(normalized)
+    || /(?:^|\s)\d{5,7}\b/.test(normalized) && /\bNPP\b/i.test(normalized)
+}
+
+function sanitizeProblemMetadata(value) {
+  if (!value || typeof value !== 'string') return value
+
+  const processParentheticalText = (text) => {
+    const parts = text.split('/').map(part => part.trim()).filter(Boolean)
+    const filtered = parts.filter(part => !isSensitiveProblemMetadata(part))
+
+    if (filtered.length === 0) {
+      return ''
+    }
+
+    return filtered.join(' / ')
+  }
+
+  let nextValue = value
+    .replace(/\(([^)]*)\)/g, (match, inner) => {
+      const cleaned = processParentheticalText(inner)
+      return cleaned ? `(${cleaned})` : ''
+    })
+    .replace(/\b(?:NPP|npp)\s*[:\-]?\s*(?:P)?\d{5,7}\b/gi, '')
+    .replace(/\b(?:Hostname|Host name|HostName|Computer Name|PC Name)\s*[:\-]?\s*[A-Za-z0-9.-]+\b/gi, '')
+    .replace(/\s*\/\s*(?=\)|$)/g, '')
+    .replace(/\(\s*\/\s*/g, '(')
+    .replace(/\s*\/\s*\)/g, ')')
+    .replace(/\s{2,}/g, ' ')
+    .replace(/\(\s*\)/g, '')
+    .replace(/\s*\/\s*\//g, '/')
+    .replace(/\s+\//g, ' / ')
+    .replace(/\/\s+/g, '/ ')
+    .trim()
+
+  return nextValue
+}
+
 function sanitizeTicketText(value) {
   if (!value || typeof value !== 'string') return value
 
@@ -70,7 +125,7 @@ function sanitizeTicketText(value) {
     return 'Device request'
   }
 
-  return nextValue
+  return sanitizeProblemMetadata(nextValue)
 }
 
 function getPeriodFromSheetDate(dateStr) {
@@ -396,12 +451,12 @@ function normalizeTicketDates(ticket, sourceDates) {
 
   const normalizeDatePart = (value) => {
     if (!value || typeof value !== 'string') return value
-    if (sourceDateByWhatsapp.has(value)) return sourceDateByWhatsapp.get(value)
-    if (sourceDateBySheet.has(value)) return value
+    if (sourceDateByWhatsapp.has(value)) return padSheetDate(sourceDateByWhatsapp.get(value))
+    if (sourceDateBySheet.has(value)) return padSheetDate(value)
 
     const fixed = fixDate(value)
-    if (sourceDateBySheet.has(fixed)) return fixed
-    return fixed
+    if (sourceDateBySheet.has(fixed)) return padSheetDate(fixed)
+    return padSheetDate(fixed)
   }
 
   const normalizeDateTimePart = (value) => {
@@ -410,7 +465,7 @@ function normalizeTicketDates(ticket, sourceDates) {
     if (!match) return value
 
     const [, datePart, timePart] = match
-    return `${normalizeDatePart(datePart)}${timePart}`
+    return `${padSheetDate(normalizeDatePart(datePart))} ${padSheetTime(timePart.trim())}`
   }
 
   normalized.date = normalizeDatePart(normalized.date)
@@ -422,7 +477,7 @@ function normalizeTicketDates(ticket, sourceDates) {
   // atau masih berupa placeholder default.
   const defaultTodayDate = new Date().toLocaleDateString('en-US')
   if (primarySourceDate && (!normalized.date || normalized.date === defaultTodayDate)) {
-    normalized.date = primarySourceDate.sheetDate
+    normalized.date = padSheetDate(primarySourceDate.sheetDate)
   }
 
   const period = getPeriodFromSheetDate(normalized.date)

@@ -2,9 +2,7 @@ import { useMemo, useState, useEffect, useCallback, useRef } from 'react'
 import { motion } from 'framer-motion'
 import { BarChart3, TrendingUp, TrendingDown, Clock, CheckCircle, AlertCircle, ChevronDown } from 'lucide-react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { useSession } from '../context/SessionContext'
-import { useAuth } from '../context/AuthContext'
-import { useSheetsSync } from '../hooks/useSheetsSync'
+import { useSheetsData } from '../context/SheetsDataProvider'
 import { getSummaryStats, groupByDate, groupByMonth } from '../utils/ticketUtils'
 import { formatResolutionTime, parseResponseTime } from '../utils/dateUtils'
 import ModernHeader from '../components/ModernHeader'
@@ -24,8 +22,6 @@ const itemVariants = {
   hidden: { opacity: 0, y: 20 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.5 } }
 }
-
-const REALTIME_SYNC_INTERVAL_MS = 30000
 
 function startOfWeek(date) {
   const d = new Date(date.getFullYear(), date.getMonth(), date.getDate())
@@ -220,11 +216,9 @@ function Sparkline({ data, color, valueFormatter }) {
 
 export default function ModernDashboard() {
   const navigate = useNavigate()
-  const { allTickets, sheetsTickets, setSheetsTickets, lastSheetsSync, setLastSheetsSync } = useSession()
-  const { isAuthLoading, sheetId } = useAuth()
-  const { loadSheetsData } = useSheetsSync()
+  const { tickets, lastSync: lastSheetsSync, refresh } = useSheetsData()
   const [showImportModal, setShowImportModal] = useState(false)
-  const [displayTickets, setDisplayTickets] = useState(() => sheetsTickets || allTickets)
+  const displayTickets = useMemo(() => tickets.filter(t => !t.requesterIsRawNpp && !/^\d{5,6}$/.test(t.requester)), [tickets])
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [dateRange, setDateRange] = useState('all') // 'all', 'week', 'month', '3months', 'custom'
   const [customStartDate, setCustomStartDate] = useState('')
@@ -241,63 +235,11 @@ export default function ModernDashboard() {
   const [siteDropdownOpen, setSiteDropdownOpen] = useState(false)
   const [dropdownSearch, setDropdownSearch] = useState('')
 
-  const loadRealtimeSheetsData = useCallback(async () => {
-    if (!sheetId) return
-    try {
-      const freshTickets = await loadSheetsData()
-      if (Array.isArray(freshTickets)) {
-        setSheetsTickets(freshTickets)
-        setDisplayTickets(freshTickets)
-        if (setLastSheetsSync) setLastSheetsSync(new Date())
-      }
-    } catch (err) {
-      console.error('Realtime Sheets sync failed:', err)
-    }
-  }, [sheetId, loadSheetsData, setSheetsTickets, setLastSheetsSync])
-
-  // Initial load when auth is ready and sheetId is available
-  useEffect(() => {
-    if (isAuthLoading || !sheetId) return
-    loadRealtimeSheetsData()
-  }, [isAuthLoading, sheetId, loadRealtimeSheetsData])
-
-  // Real-time polling & window focus/visibility sync
-  useEffect(() => {
-    if (!sheetId) return
-
-    const timer = setInterval(() => {
-      loadRealtimeSheetsData()
-    }, REALTIME_SYNC_INTERVAL_MS)
-
-    let lastFocusFetch = 0
-    const handleFocus = () => {
-      const now = Date.now()
-      if (now - lastFocusFetch > 5000) {
-        lastFocusFetch = now
-        loadRealtimeSheetsData()
-      }
-    }
-
-    window.addEventListener('focus', handleFocus)
-    document.addEventListener('visibilitychange', handleFocus)
-
-    return () => {
-      clearInterval(timer)
-      window.removeEventListener('focus', handleFocus)
-      document.removeEventListener('visibilitychange', handleFocus)
-    }
-  }, [sheetId, loadRealtimeSheetsData])
-
-  // Keep displayTickets synchronized with sheetsTickets or allTickets
-  useEffect(() => {
-    setDisplayTickets(sheetsTickets !== null ? sheetsTickets : allTickets)
-  }, [sheetsTickets, allTickets])
-
   // Refresh data from Sheets
   const handleRefreshSheets = async () => {
     setIsRefreshing(true)
     try {
-      await loadRealtimeSheetsData()
+      await refresh()
     } catch (err) {
       console.error('Refresh failed:', err)
     } finally {
@@ -423,7 +365,7 @@ export default function ModernDashboard() {
       resolution: formatTrend(currentStats.avgResolution, previousStats.avgResolution, trendRange.label, true, 'resolution'),
     }
   }, [displayTickets, selectedTypes, selectedSites, dateRange, customStartDate, customEndDate])
-  
+
   // Response time trend: compute separately so we can treat 'all' range specially
   const responseTrend = useMemo(() => {
     const trendRange = getDashboardRange(dateRange, customStartDate, customEndDate)
@@ -718,7 +660,7 @@ export default function ModernDashboard() {
                     key={type}
                     onClick={() => toggleTypeFilter(type)}
                     className={`px-3 py-1.5 rounded-md text-[12px] font-medium transition-colors ${isSelected
-                    ? 'bg-[var(--accent)]/15 text-[var(--accent)]'
+                      ? 'bg-[var(--accent)]/15 text-[var(--accent)]'
                       : 'text-slate-400 hover:text-white hover:bg-white/[0.06]'
                       }`}
                   >
@@ -904,8 +846,8 @@ export default function ModernDashboard() {
                       <span className="text-[11px] text-slate-500 no-underline">{kpi.comparison.context}</span>
                     </div>
                   </div>
-              
-                    <div className="flex-shrink-0">
+
+                  <div className="flex-shrink-0">
                     <Sparkline data={kpi.sparklineData} color={kpi.sparklineColor} valueFormatter={kpi.label === 'Avg Response Time' ? (v => formatResolutionTime(v)) : undefined} />
                   </div>
                 </div>
@@ -917,7 +859,7 @@ export default function ModernDashboard() {
                   </div>
                 </div>
               )}
-              
+
             </motion.div>
           ))}
         </motion.div>

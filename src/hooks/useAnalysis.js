@@ -104,7 +104,7 @@ function buildAnalysisQueue(chatText, maxChunkSize) {
 }
 
 export function useAnalysis() {
-  const { customRules, sheetId, getActiveAuth } = useAuth()
+  const { customRules, sheetId } = useAuth()
   const { activeSession, updateSession, setSheetsTickets, setLastSheetsSync } = useSession()
   const [loading, setLoading] = useState(false)
   const [syncStatus, setSyncStatus] = useState('idle') // idle | syncing | synced | error
@@ -127,8 +127,7 @@ export function useAnalysis() {
 
     setSyncStatus('syncing')
     try {
-      const auth = await getActiveAuth()
-      await appendTicketsToSheet(tickets, auth.accessToken, sheetId)
+      await appendTicketsToSheet(tickets, sheetId)
       setSyncStatus('synced')
       setLastSyncTime(new Date())
       if (setSheetsTickets) {
@@ -146,7 +145,7 @@ export function useAnalysis() {
       setTimeout(() => setSyncStatus('idle'), 5000)
       throw err
     }
-  }, [getActiveAuth, sheetId])
+  }, [sheetId])
 
   const retrySync = useCallback(async () => {
     if (!retryTickets) return

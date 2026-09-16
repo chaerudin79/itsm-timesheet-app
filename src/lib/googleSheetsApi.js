@@ -1,205 +1,66 @@
-// Google Sheets API integration
-// Uses googleapis library for read/write operations
+// Sheets access now goes through our own backend (Service Account),
+// instead of calling Google Sheets API directly from the browser.
+// This is what removes the Google login popup entirely.
 
-const SHEETS_API_URL = 'https://sheets.googleapis.com/v4/spreadsheets'
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8787'
+const API_KEY = import.meta.env.VITE_BACKEND_API_KEY || ''
 
-export async function appendTicketsToSheet(tickets, accessToken, sheetId, sheetName = 'Sheet1') {
-  if (!tickets || tickets.length === 0) return { success: true, appended: 0 }
-  if (accessToken === 'mock-access-token') {
-    return { success: true, appended: tickets.length }
+async function backendFetch(path, options = {}) {
+  const response = await fetch(`${BACKEND_URL}${path}`, {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': API_KEY,
+      ...(options.headers || {}),
+    },
+    cache: 'no-store',
+  })
+
+  if (!response.ok) {
+    let message = response.statusText
+    try {
+      const body = await response.json()
+      message = body.error || message
+    } catch {
+      // ignore parse errors, keep statusText
+    }
+    throw new Error(`Backend error (${response.status}): ${message}`)
   }
 
+  return response.json()
+}
+
+export async function appendTicketsToSheet(tickets, sheetId, sheetName = 'Sheet1') {
+  if (!tickets || tickets.length === 0) return { success: true, appended: 0 }
   try {
-    // Get sheet name (default to "Sheet1")
-    const finalSheetName = sheetName || 'Sheet1'
-
-    // Build headers if needed
-    const headers = [
-      'No', 'Source', 'Type', 'Requester', 'Period', 'Year',
-      'Problem/Issue', 'Action', 'Date', 'Task Started', 'Task Finished',
-      'Resolution Time', 'First Response Time', 'Status', 'Engineer', 'Remarks'
-    ]
-
-    // Get existing rows in column A to determine the next ticket number
-    const getResponse = await fetch(
-      `${SHEETS_API_URL}/${sheetId}/values/${finalSheetName}!A:A`,
-      {
-        headers: { Authorization: `Bearer ${accessToken}` }
-      }
-    )
-
-    let nextNumber = 1
-    let needsHeaders = true
-
-    if (getResponse.ok) {
-      const data = await getResponse.json()
-      if (data.values && data.values.length > 0) {
-        needsHeaders = false
-        nextNumber = data.values.length
-      }
-    }
-
-    // Prepare rows
-    const rows = tickets.map((ticket, idx) => [
-      nextNumber + idx, // No
-      ticket.source || 'WhatsApp',
-      ticket.type || '',
-      ticket.requester || '',
-      ticket.period || '',
-      ticket.year || new Date().getFullYear(),
-      ticket.problem || '',
-      ticket.action || '',
-      ticket.date || new Date().toLocaleDateString('en-US'),
-      ticket.taskStarted || '',
-      ticket.taskFinished || '',
-      ticket.resolutionTime || '',
-      ticket.firstResponseTime || '',
-      ticket.status || 'OPEN',
-      ticket.engineer || 'ITSM NAC BNI',
-      ticket.remarks || ''
-    ])
-
-    // Build update requests
-    const requests = []
-
-    if (needsHeaders) {
-      requests.push({
-        updateCells: {
-          rows: [{
-            values: headers.map(h => ({
-              userEnteredValue: { stringValue: h },
-              userEnteredFormat: {
-                backgroundColor: { red: 0.95, green: 0.95, blue: 0.95 },
-                textFormat: { bold: true }
-              }
-            }))
-          }],
-          fields: 'userEnteredValue,userEnteredFormat',
-          start: { sheetId: 0, rowIndex: 0, columnIndex: 0 }
-        }
-      })
-    }
-
-    // Append data rows
-    requests.push({
-      appendCells: {
-        sheetId: 0,
-        rows: rows.map(row => ({
-          values: row.map(cell => ({
-            userEnteredValue: {
-              stringValue: String(cell)
-            }
-          }))
-        })),
-        fields: 'userEnteredValue'
-      }
+    return await backendFetch('/api/sheets/append', {
+      method: 'POST',
+      body: JSON.stringify({ sheetId, sheetName, tickets }),
     })
-
-    // Execute batch update
-    const response = await fetch(
-      `${SHEETS_API_URL}/${sheetId}:batchUpdate`,
-      {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ requests })
-      }
-    )
-
-    if (!response.ok) {
-      const error = await response.json()
-      throw new Error(`Sheets API error: ${error.error?.message || response.statusText}`)
-    }
-
-    return { success: true, appended: rows.length }
   } catch (error) {
     console.error('Failed to append to Google Sheet:', error)
     throw error
   }
 }
 
-export async function getSheetData(accessToken, sheetId, sheetName = 'Sheet1') {
-  if (accessToken === 'mock-access-token') {
-    return []
-  }
+export async function getSheetData(sheetId, sheetName = 'Sheet1') {
+  if (!sheetId) return []
   try {
-    const response = await fetch(
-      `${SHEETS_API_URL}/${sheetId}/values/${sheetName}`,
-      {
-        headers: { Authorization: `Bearer ${accessToken}` }
-      }
-    )
-
-    if (!response.ok) {
-      throw new Error('Failed to read Google Sheet')
-    }
-
-    const data = await response.json()
-    const rows = data.values || []
-
-    if (rows.length === 0) return []
-
-    // Parse header row
-    const headers = rows[0]
-    const headerMap = {}
-    headers.forEach((h, idx) => {
-      if (typeof h === 'string') {
-        headerMap[h.toLowerCase().trim()] = idx
-      }
-    })
-
-    const normalizeKey = (key) => String(key).toLowerCase().trim()
-
-    // Parse data rows into ticket objects
-    const tickets = rows.slice(1).map((row, idx) => {
-      if (!row || row.length === 0) return null
-
-      const get = (key, defaultVal = '') => {
-        const index = headerMap[normalizeKey(key)]
-        return typeof index === 'number' ? row[index] || defaultVal : defaultVal
-      }
-
-      return {
-        no: parseInt(get('no')) || idx + 1,
-        source: get('source', 'WhatsApp'),
-        type: get('type', 'Problem'),
-        requester: get('requester', ''),
-        period: get('period', ''),
-        year: parseInt(get('year')) || new Date().getFullYear(),
-        problem: get('problem/issue', ''),
-        action: get('action', ''),
-        date: get('date', new Date().toLocaleDateString('en-US')),
-        taskStarted: get('task started', ''),
-        taskFinished: get('task finished', ''),
-        resolutionTime: get('resolution time', ''),
-        firstResponseTime: get('first response time', ''),
-        status: get('status', 'OPEN'),
-        engineer: get('engineer', 'ITSM NAC BNI'),
-        remarks: get('remarks', '')
-      }
-    }).filter(t => t !== null && t.problem) // Filter null dan empty rows
-
-    return tickets
+    const params = new URLSearchParams({ sheetId, sheetName })
+    const data = await backendFetch(`/api/sheets/data?${params.toString()}`)
+    return data.tickets || []
   } catch (error) {
     console.error('Failed to get sheet data:', error)
-    return []
+    throw error // <-- MUST throw so useSheetsSync knows it failed!
   }
 }
 
-export async function verifySheetAccess(accessToken, sheetId) {
-  if (accessToken === 'mock-access-token') {
-    return true
-  }
+export async function verifySheetAccess(sheetId) {
+  if (!sheetId) return false
   try {
-    const response = await fetch(
-      `${SHEETS_API_URL}/${sheetId}/properties`,
-      {
-        headers: { Authorization: `Bearer ${accessToken}` }
-      }
-    )
-    return response.ok
+    const params = new URLSearchParams({ sheetId })
+    const data = await backendFetch(`/api/sheets/verify?${params.toString()}`)
+    return Boolean(data.ok)
   } catch {
     return false
   }

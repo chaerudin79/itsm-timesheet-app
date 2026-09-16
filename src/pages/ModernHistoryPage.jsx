@@ -39,7 +39,7 @@ export default function ModernHistoryPage() {
     try {
       const fresh = await loadSheetsData()
       if (Array.isArray(fresh)) {
-        setSheetsTickets(fresh)
+        setSheetsTickets(fresh.filter(t => !/^\d{5,6}$/.test(t.requester)))
         if (setLastSheetsSync) setLastSheetsSync(new Date())
       }
     } catch (err) {

@@ -14,7 +14,7 @@ const NAV = [
 ]
 
 export default function AppLayout({ children }) {
-  const { darkMode, toggleDarkMode, disconnect, getActiveAuth, sheetId } = useAuth()
+  const { darkMode, toggleDarkMode, disconnect, sheetId } = useAuth()
   const { mergeTicketsFromSheets, allTickets } = useSession()
   const navigate = useNavigate()
 
@@ -23,8 +23,7 @@ export default function AppLayout({ children }) {
     const autoLoadSheetsOnStartup = async () => {
       try {
         if (!sheetId) return
-        const auth = await getActiveAuth()
-        const sheetsTickets = await getSheetData(auth.accessToken, sheetId)
+        const sheetsTickets = await getSheetData(sheetId)
 
         if (sheetsTickets.length > 0 && allTickets.length === 0) {
           // Only auto-load if there is no local data
@@ -38,7 +37,7 @@ export default function AppLayout({ children }) {
     // Delay slightly to ensure auth is ready
     const timer = setTimeout(autoLoadSheetsOnStartup, 500)
     return () => clearTimeout(timer)
-  }, [sheetId, getActiveAuth, mergeTicketsFromSheets, allTickets.length])
+  }, [sheetId, mergeTicketsFromSheets, allTickets.length])
 
   const handleDisconnect = () => {
     if (confirm('Disconnect from Google Sheets?')) {
