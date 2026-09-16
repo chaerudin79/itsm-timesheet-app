@@ -142,10 +142,40 @@ function getYearFromSheetDate(dateStr) {
 
 function extractWhatsAppDates(chatText = '') {
   const matches = [...chatText.matchAll(/\[\d{1,2}[.:]\d{2},\s*(\d{1,2}\/\d{1,2}\/\d{4})\]/g)]
-  return matches.map(match => ({
-    whatsappDate: match[1],
-    sheetDate: fixDate(match[1]),
-  }))
+  return matches.map(match => {
+    const raw = match[1]
+    const parts = raw.split('/').map(p => parseInt(p, 10))
+    const first = parts[0]
+    const second = parts[1]
+    const year = parts[2]
+
+    let day, month
+    if (second > 12) {
+      month = first
+      day = second
+    } else {
+      day = first
+      month = second
+    }
+
+    const sheetDatePadded = `${String(month).padStart(2, '0')}/${String(day).padStart(2, '0')}/${year}`
+    const sheetDateUnpadded = `${month}/${day}/${year}`
+    const whatsappDatePadded = `${String(day).padStart(2, '0')}/${String(month).padStart(2, '0')}/${year}`
+    const whatsappDateUnpadded = `${day}/${month}/${year}`
+
+    return {
+      raw,
+      day,
+      month,
+      year,
+      sheetDate: sheetDatePadded,
+      sheetDatePadded,
+      sheetDateUnpadded,
+      whatsappDate: raw,
+      whatsappDatePadded,
+      whatsappDateUnpadded,
+    }
+  })
 }
 
 // Calculate the first response and resolution time per ticket based on chat chronology.
@@ -446,16 +476,41 @@ function normalizeMinimumDuration(value, useDefaultIfEmpty = false) {
 function normalizeTicketDates(ticket, sourceDates) {
   const normalized = { ...ticket }
   const primarySourceDate = sourceDates[0]
-  const sourceDateByWhatsapp = new Map(sourceDates.map(item => [item.whatsappDate, item.sheetDate]))
-  const sourceDateBySheet = new Set(sourceDates.map(item => item.sheetDate))
+
+  const sheetDateSet = new Set()
+  const whatsappToSheetMap = new Map()
+
+  for (const item of sourceDates) {
+    if (item.sheetDatePadded) sheetDateSet.add(item.sheetDatePadded)
+    if (item.sheetDateUnpadded) sheetDateSet.add(item.sheetDateUnpadded)
+    if (item.whatsappDatePadded) whatsappToSheetMap.set(item.whatsappDatePadded, item.sheetDatePadded)
+    if (item.whatsappDateUnpadded) whatsappToSheetMap.set(item.whatsappDateUnpadded, item.sheetDatePadded)
+    if (item.raw) whatsappToSheetMap.set(item.raw, item.sheetDatePadded)
+  }
 
   const normalizeDatePart = (value) => {
     if (!value || typeof value !== 'string') return value
-    if (sourceDateByWhatsapp.has(value)) return padSheetDate(sourceDateByWhatsapp.get(value))
-    if (sourceDateBySheet.has(value)) return padSheetDate(value)
+    const trimmed = value.trim()
 
-    const fixed = fixDate(value)
-    if (sourceDateBySheet.has(fixed)) return padSheetDate(fixed)
+    // 1. If it already matches a known sheet date (padded or unpadded), return padded
+    if (sheetDateSet.has(trimmed)) {
+      return padSheetDate(trimmed)
+    }
+
+    // 2. If it matches a WhatsApp date from the source chat, convert to sheet date
+    if (whatsappToSheetMap.has(trimmed)) {
+      return whatsappToSheetMap.get(trimmed)
+    }
+
+    // 3. Check if padded version matches sheet date
+    const padded = padSheetDate(trimmed)
+    if (sheetDateSet.has(padded)) {
+      return padded
+    }
+
+    // 4. Fallback: if outside known sourceDates
+    const fixed = fixDate(trimmed)
+    if (sheetDateSet.has(fixed)) return padSheetDate(fixed)
     return padSheetDate(fixed)
   }
 
@@ -477,7 +532,7 @@ function normalizeTicketDates(ticket, sourceDates) {
   // atau masih berupa placeholder default.
   const defaultTodayDate = new Date().toLocaleDateString('en-US')
   if (primarySourceDate && (!normalized.date || normalized.date === defaultTodayDate)) {
-    normalized.date = padSheetDate(primarySourceDate.sheetDate)
+    normalized.date = primarySourceDate.sheetDatePadded || padSheetDate(primarySourceDate.sheetDate)
   }
 
   const period = getPeriodFromSheetDate(normalized.date)
