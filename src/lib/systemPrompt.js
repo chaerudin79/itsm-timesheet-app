@@ -5,6 +5,7 @@ export const systemPrompt = `You are an expert Security Engineer and ITSM Analys
 - Ticket Output format: M/D/YYYY (Month first, Day second)
   Example: [10.42, 2/7/2026] = 2 July 2026 -> Output: "7/2/2026"
   Example: [09.15, 11/3/2025] = 11 March 2025 -> Output: "3/11/2025"
+  Example: [14.07, 10/09/2026] = 10 September 2026 -> Output: "9/10/2026"
 - taskStarted and taskFinished: M/D/YYYY H:MM (24-hour time)
 - resolutionTime: H:MM:SS (e.g., 0:15:00, 1:02:00)
 

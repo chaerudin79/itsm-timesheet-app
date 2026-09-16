@@ -39,6 +39,7 @@ export function convertJsonlToWhatsApp(jsonlText) {
       const month = String(localDate.getUTCMonth() + 1).padStart(2, '0')
       const year = localDate.getUTCFullYear()
       
+      // WhatsApp format uses DD/MM/YYYY in chat display
       const timestamp = `[${hours}.${minutes}, ${day}/${month}/${year}]`
       const senderName = msg.sender_name || 'Unknown'
       const text = msg.text
