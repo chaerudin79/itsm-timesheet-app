@@ -28,12 +28,16 @@ export function convertJsonlToWhatsApp(jsonlText) {
       if (msg.type !== 'text' || !msg.text) continue
       
       // Parse ISO timestamp to WhatsApp format [HH.MM, DD/MM/YYYY]
+      // ISO is in UTC, convert to WIB (UTC+7)
       const date = new Date(msg.iso)
-      const hours = String(date.getHours()).padStart(2, '0')
-      const minutes = String(date.getMinutes()).padStart(2, '0')
-      const day = String(date.getDate()).padStart(2, '0')
-      const month = String(date.getMonth() + 1).padStart(2, '0')
-      const year = date.getFullYear()
+      const wibOffset = 7 * 60 // WIB = UTC+7 in minutes
+      const localDate = new Date(date.getTime() + wibOffset * 60 * 1000)
+      
+      const hours = String(localDate.getUTCHours()).padStart(2, '0')
+      const minutes = String(localDate.getUTCMinutes()).padStart(2, '0')
+      const day = String(localDate.getUTCDate()).padStart(2, '0')
+      const month = String(localDate.getUTCMonth() + 1).padStart(2, '0')
+      const year = localDate.getUTCFullYear()
       
       const timestamp = `[${hours}.${minutes}, ${day}/${month}/${year}]`
       const senderName = msg.sender_name || 'Unknown'
