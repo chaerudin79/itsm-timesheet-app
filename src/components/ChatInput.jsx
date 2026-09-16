@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react'
 import { Send, Paperclip, Lock } from 'lucide-react'
+import { convertJsonlToWhatsApp, isJsonlFormat } from '../lib/jsonlConverter'
 
 export default function ChatInput({ onSendMessage, disabled }) {
   const [text, setText] = useState('')
@@ -8,7 +9,12 @@ export default function ChatInput({ onSendMessage, disabled }) {
 
   const handleSend = () => {
     if (text.trim()) {
-      onSendMessage(text)
+      // Auto-detect and convert JSONL to WhatsApp format
+      const processedText = isJsonlFormat(text) 
+        ? convertJsonlToWhatsApp(text) 
+        : text
+      
+      onSendMessage(processedText)
       setText('')
       if (textareaRef.current) {
         textareaRef.current.style.height = 'auto'
@@ -33,14 +39,23 @@ export default function ChatInput({ onSendMessage, disabled }) {
 
   const handleFileUpload = (e) => {
     const file = e.target.files?.[0]
-    if (file && file.type === 'text/plain') {
+    if (file && (file.type === 'text/plain' || file.name.endsWith('.jsonl') || file.name.endsWith('.txt'))) {
       const reader = new FileReader()
       reader.onload = (event) => {
-        setText(event.target?.result || '')
+        const content = event.target?.result || ''
+        setText(content)
+        
+        // Auto-resize textarea after file load
+        setTimeout(() => {
+          if (textareaRef.current) {
+            textareaRef.current.style.height = 'auto'
+            textareaRef.current.style.height = Math.min(textareaRef.current.scrollHeight, 150) + 'px'
+          }
+        }, 0)
       }
       reader.readAsText(file)
     } else {
-      alert('Please upload a .txt file')
+      alert('Please upload a .txt or .jsonl file')
     }
   }
 
@@ -58,7 +73,7 @@ export default function ChatInput({ onSendMessage, disabled }) {
           <input
             ref={fileInputRef}
             type="file"
-            accept=".txt"
+            accept=".txt,.jsonl"
             onChange={handleFileUpload}
             className="hidden"
           />
@@ -68,7 +83,7 @@ export default function ChatInput({ onSendMessage, disabled }) {
             value={text}
             onChange={handleTextChange}
             onKeyDown={handleKeyDown}
-            placeholder="Paste chat WhatsApp di sini atau upload file .txt..."
+            placeholder="Paste chat WhatsApp atau JSONL di sini, atau upload file .txt/.jsonl..."
             className="flex-1 px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-50 placeholder-slate-500 dark:placeholder-slate-400 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[44px] max-h-[150px]"
           />
 
