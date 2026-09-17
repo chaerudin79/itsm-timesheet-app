@@ -84,7 +84,7 @@ export default function ModernDataTable({
 
   const renderCell = (value, columnKey) => {
     if (columnKey === 'no') {
-      return <span className="font-mono text-xs text-slate-400">#{value ?? '—'}</span>
+      return <span className="font-mono text-xs text-slate-400 dark:text-slate-500">#{value ?? '—'}</span>
     }
     if (columnKey === 'status') {
       const config = statusConfig[value] || statusConfig.OPEN
@@ -93,7 +93,7 @@ export default function ModernDataTable({
     if (columnKey === 'type') {
       return <span className={`badge ${getTicketTypeBadge(value)}`}>{value || 'Unknown'}</span>
     }
-    return <span>{value}</span>
+    return <span className="text-slate-700 dark:text-slate-300">{value}</span>
   }
 
   return (
@@ -104,15 +104,15 @@ export default function ModernDataTable({
       transition={{ duration: 0.2 }}
     >
       {/* Table */}
-      <div className="table-container">
-        <table className="table-base">
-          <thead className="table-header">
+      <div className="table-container border border-slate-200 dark:border-slate-800 rounded-[10px]">
+        <table className="table-base w-full border-collapse">
+          <thead className="bg-slate-50 dark:bg-slate-800/60 sticky top-0 border-b border-slate-200 dark:border-slate-800 z-10">
             <tr>
               {columns.map(col => (
-                <th key={col.key} className="table-th">
+                <th key={col.key} className="px-6 py-4 text-left text-xs font-semibold text-slate-600 dark:text-brand-text-secondary uppercase tracking-wider">
                   <button
                     onClick={() => handleSort(col.key)}
-                    className="flex items-center gap-2 hover:text-slate-200 transition-colors focus:outline-none"
+                    className="flex items-center gap-2 hover:text-slate-900 dark:hover:text-white transition-colors focus:outline-none"
                   >
                     {col.label}
                     <div className="flex flex-col opacity-50 hover:opacity-100">
@@ -127,21 +127,19 @@ export default function ModernDataTable({
           <tbody>
             {paginatedData.length === 0 ? (
               <tr>
-                <td colSpan={columns.length} className="table-td text-center py-8">
-                  <div className="empty-state">
-                    <p className="empty-state-description">No tickets found</p>
-                  </div>
+                <td colSpan={columns.length} className="px-6 py-8 text-center text-sm text-slate-500 dark:text-brand-text-secondary">
+                  No tickets found
                 </td>
               </tr>
             ) : (
               paginatedData.map((row, idx) => (
                 <tr
                   key={idx}
-                  className="table-row cursor-pointer hover:bg-white/[0.025] transition-colors duration-150"
+                  className="cursor-pointer hover:bg-slate-50/80 dark:hover:bg-slate-800/40 border-b border-slate-200 dark:border-slate-800 transition-colors duration-150"
                   onClick={() => onRowClick?.(row)}
                 >
                   {columns.map(col => (
-                    <td key={col.key} className="table-td">
+                    <td key={col.key} className="px-6 py-4 text-sm text-slate-700 dark:text-slate-300">
                       {renderCell(row[col.key], col.key)}
                     </td>
                   ))}
@@ -154,8 +152,8 @@ export default function ModernDataTable({
 
       {/* Pagination sticky footer */}
       {totalPages > 1 && (
-        <div className="sticky bottom-0 bg-[var(--bg-surface)] border-t border-[var(--border-subtle)] px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-4 z-10 rounded-b-[10px] shadow-lg">
-          <div className="flex flex-wrap items-center gap-4 text-sm text-slate-400">
+        <div className="sticky bottom-0 bg-white dark:bg-brand-surface border-t border-slate-200 dark:border-slate-800 px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-4 z-10 rounded-b-[10px] shadow-sm dark:shadow-lg">
+          <div className="flex flex-wrap items-center gap-4 text-sm text-slate-500 dark:text-brand-text-secondary">
             <div>
               Showing {startIdx + 1} to {Math.min(startIdx + localRowsPerPage, sortedData.length)} of {sortedData.length} tickets
             </div>
@@ -167,7 +165,7 @@ export default function ModernDataTable({
                   setLocalRowsPerPage(Number(e.target.value))
                   setCurrentPage(1)
                 }}
-                className="bg-[var(--bg-surface-raised)] border border-[var(--border-subtle)] rounded-[8px] px-2.5 py-1 text-white text-xs focus:outline-none focus:border-[var(--accent)] cursor-pointer"
+                className="bg-white dark:bg-brand-bg border border-slate-200 dark:border-slate-800 rounded-[8px] px-2.5 py-1 text-slate-900 dark:text-white text-xs focus:outline-none focus:border-brand-primary cursor-pointer"
               >
                 {[10, 25, 50, 100].map(size => (
                   <option key={size} value={size}>{size}</option>
@@ -181,7 +179,7 @@ export default function ModernDataTable({
               <button
                 onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                 disabled={currentPage === 1}
-                className="w-8 h-8 rounded-[8px] bg-[var(--bg-surface-raised)] border border-[var(--border-subtle)] hover:border-white/20 text-slate-400 hover:text-white flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                className="w-8 h-8 rounded-[8px] bg-white dark:bg-brand-bg border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-white/20 text-slate-600 dark:text-brand-text-secondary hover:text-slate-900 dark:hover:text-white flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
@@ -189,14 +187,14 @@ export default function ModernDataTable({
               <div className="flex items-center gap-1">
                 {getPageNumbers(currentPage, totalPages).map((p, idx) => (
                   p === '...' ? (
-                    <span key={`dots-${idx}`} className="px-2 text-slate-500 text-xs">...</span>
+                    <span key={`dots-${idx}`} className="px-2 text-slate-400 dark:text-slate-500 text-xs">...</span>
                   ) : (
                     <button
                       key={`page-${p}`}
                       onClick={() => setCurrentPage(p)}
                       className={`w-8 h-8 rounded-[8px] font-medium text-xs transition-colors ${currentPage === p
-                        ? 'bg-[var(--accent)] text-black'
-                        : 'bg-[var(--bg-surface-raised)] text-slate-400 border border-[var(--border-subtle)] hover:border-white/20'
+                        ? 'bg-brand-primary text-white font-semibold'
+                        : 'bg-white dark:bg-brand-bg text-slate-600 dark:text-brand-text-secondary border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-white/20 hover:text-slate-900 dark:hover:text-white'
                       }`}
                     >
                       {p}
@@ -208,13 +206,13 @@ export default function ModernDataTable({
               <button
                 onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                 disabled={currentPage === totalPages}
-                className="w-8 h-8 rounded-[8px] bg-[var(--bg-surface-raised)] border border-[var(--border-subtle)] hover:border-white/20 text-slate-400 hover:text-white flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                className="w-8 h-8 rounded-[8px] bg-white dark:bg-brand-bg border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-white/20 text-slate-600 dark:text-brand-text-secondary hover:text-slate-900 dark:hover:text-white flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
               >
                 <ChevronRight className="w-4 h-4" />
               </button>
             </div>
             
-            <div className="flex items-center gap-2 text-sm text-slate-400">
+            <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-brand-text-secondary">
               <span>Go to</span>
               <input
                 type="number"
@@ -231,7 +229,7 @@ export default function ModernDataTable({
                     }
                   }
                 }}
-                className="w-12 bg-[var(--bg-surface-raised)] border border-[var(--border-subtle)] rounded-[8px] px-2 py-1 text-white text-xs focus:outline-none focus:border-[var(--accent)] text-center"
+                className="w-12 bg-white dark:bg-brand-bg border border-slate-200 dark:border-slate-800 rounded-[8px] px-2 py-1 text-slate-900 dark:text-white text-xs focus:outline-none focus:border-brand-primary text-center"
               />
             </div>
           </div>

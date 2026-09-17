@@ -52,13 +52,13 @@ export default function ModernAppLayout({ children }) {
   }
 
   return (
-    <div className="flex h-screen bg-[var(--bg-base)] text-white overflow-hidden">
+    <div className="flex h-screen bg-[#F8FAFC] dark:bg-brand-bg text-slate-900 dark:text-brand-text overflow-hidden">
       {/* Sidebar - Always visible */}
-      <aside className="w-[244px] flex-shrink-0 bg-[#101316] border-r border-[#252B31] flex flex-col h-screen">
+      <aside className="w-[244px] flex-shrink-0 bg-white dark:bg-brand-surface border-r border-slate-200 dark:border-slate-800 flex flex-col h-screen transition-colors duration-150">
         {/* Logo Section */}
-        <div className="px-5 py-5 border-b border-[#252B31]">
+        <div className="px-5 py-5 border-b border-slate-200 dark:border-slate-800">
           <div className="flex items-center gap-3">
-            <div className="w-20 h-9 rounded-md bg-white flex items-center justify-center p-1.5">
+            <div className="w-20 h-9 rounded-md bg-white border border-slate-200 dark:border-slate-700/60 flex items-center justify-center p-1.5 shadow-sm">
               <img
                 src={bniLogo}
                 alt="BNI"
@@ -66,8 +66,8 @@ export default function ModernAppLayout({ children }) {
               />
             </div>
             <div>
-              <h1 className="text-[13px] font-semibold text-white">ITSM NAC BNI</h1>
-              <p className="text-[11px] text-slate-500">Timesheet Manager</p>
+              <h1 className="text-[13px] font-semibold text-slate-900 dark:text-brand-text">ITSM NAC BNI</h1>
+              <p className="text-[11px] text-slate-500 dark:text-brand-text-secondary">Timesheet Manager</p>
             </div>
           </div>
         </div>
@@ -85,7 +85,7 @@ export default function ModernAppLayout({ children }) {
                   <Icon className="w-[18px] h-[18px] flex-shrink-0" />
                   <span className="flex-1">{label}</span>
                   {isActive && (
-                    <div className="absolute -left-3 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-[var(--accent)] rounded-r" />
+                    <div className="absolute -left-3 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-brand-primary rounded-r" />
                   )}
                 </div>
               )}
@@ -94,7 +94,7 @@ export default function ModernAppLayout({ children }) {
         </nav>
 
         {/* Bottom Actions */}
-        <div className="px-3 py-4 border-t border-[#252B31] space-y-1">
+        <div className="px-3 py-4 border-t border-slate-200 dark:border-slate-800 space-y-1">
           <NavLink
             to="/settings"
           >
@@ -116,7 +116,7 @@ export default function ModernAppLayout({ children }) {
 
           <button
             onClick={handleDisconnect}
-            className="sidebar-nav-item w-full justify-start text-[#EF4444] hover:text-[#EF4444] hover:bg-[#EF4444]/10"
+            className="sidebar-nav-item w-full justify-start text-brand-danger hover:text-brand-danger hover:bg-brand-danger/10"
           >
             <LogOut className="w-5 h-5" />
             <span>Log Out</span>
@@ -125,7 +125,7 @@ export default function ModernAppLayout({ children }) {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col overflow-y-auto min-w-0">
+      <main className="flex-1 flex flex-col overflow-y-auto min-w-0 bg-[#F8FAFC] dark:bg-brand-bg transition-colors duration-150">
         {children}
       </main>
     </div>

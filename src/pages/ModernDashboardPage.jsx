@@ -2,6 +2,7 @@ import { useMemo, useState, useEffect, useCallback, useRef } from 'react'
 import { motion } from 'framer-motion'
 import { BarChart3, TrendingUp, TrendingDown, Clock, CheckCircle, AlertCircle, ChevronDown } from 'lucide-react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
 import { useSheetsData } from '../context/SheetsDataProvider'
 import { getSummaryStats, groupByDate, groupByMonth } from '../utils/ticketUtils'
 import { formatResolutionTime, parseResponseTime } from '../utils/dateUtils'
@@ -147,8 +148,8 @@ function TicketActivityTooltip({ active, payload, label }) {
   })
 
   return (
-    <div className="rounded-md border border-[#252A30] bg-[#171B20] px-3 py-2 text-[12px] shadow-lg shadow-black/20">
-      <p className="text-slate-400">{formattedDate}</p>
+    <div className="rounded-md border border-slate-200 dark:border-slate-800 bg-white dark:bg-brand-surface px-3 py-2 text-[12px] shadow-lg text-slate-900 dark:text-brand-text">
+      <p className="text-slate-500 dark:text-brand-text-secondary">{formattedDate}</p>
       {payload.map(({ dataKey, value, color }) => (
         <p key={dataKey} className="mt-0.5 font-medium tabular-nums" style={{ color }}>
           {dataKey === 'opened' ? 'Tickets Opened' : 'Tickets Closed'}: {value}
@@ -198,7 +199,7 @@ function Sparkline({ data, color, valueFormatter }) {
             cx={p.x}
             cy={p.y}
             r="3"
-            className="fill-[#111113] stroke-current cursor-pointer opacity-0 hover:opacity-100 transition-opacity"
+            className="fill-white dark:fill-brand-surface stroke-current cursor-pointer opacity-0 hover:opacity-100 transition-opacity"
             style={{ color: color }}
             onMouseEnter={() => setHoveredPoint(p)}
             onMouseLeave={() => setHoveredPoint(null)}
@@ -206,7 +207,7 @@ function Sparkline({ data, color, valueFormatter }) {
         ))}
       </svg>
       {hoveredPoint && (
-        <div className="absolute bottom-full right-0 mb-1.5 bg-[#1A1A1E] border border-white/10 text-[9px] text-white px-2 py-0.5 rounded whitespace-nowrap z-25 pointer-events-none">
+        <div className="absolute bottom-full right-0 mb-1.5 bg-slate-900 dark:bg-brand-surface border border-slate-700 dark:border-slate-700 text-[9px] text-white px-2 py-0.5 rounded whitespace-nowrap z-25 pointer-events-none shadow-md">
           {hoveredPoint.date}: {valueFormatter ? valueFormatter(hoveredPoint.value) : hoveredPoint.value.toFixed ? hoveredPoint.value.toFixed(0) : String(hoveredPoint.value)}
         </div>
       )}
@@ -216,6 +217,7 @@ function Sparkline({ data, color, valueFormatter }) {
 
 export default function ModernDashboard() {
   const navigate = useNavigate()
+  const { darkMode } = useAuth()
   const { tickets, lastSync: lastSheetsSync, refresh } = useSheetsData()
   const [showImportModal, setShowImportModal] = useState(false)
   const displayTickets = useMemo(() => tickets.filter(t => !t.requesterIsRawNpp && !/^\d{5,6}$/.test(t.requester)), [tickets])
@@ -539,23 +541,23 @@ export default function ModernDashboard() {
           onImport={() => setShowImportModal(true)}
           lastSync={lastSheetsSync}
         />
-        <div className="flex-1 flex flex-col items-center justify-center p-8 bg-[#0A0A0B] min-h-screen">
+        <div className="flex-1 flex flex-col items-center justify-center p-8 bg-[#F8FAFC] dark:bg-brand-bg min-h-screen text-slate-900 dark:text-brand-text transition-colors duration-150">
           <motion.div
             initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.2 }}
             className="text-center"
           >
-            <div className="w-12 h-12 bg-white/[0.05] rounded-lg flex items-center justify-center mx-auto mb-5">
-              <BarChart3 className="w-6 h-6 text-slate-400" />
+            <div className="w-12 h-12 bg-white dark:bg-brand-surface border border-slate-200 dark:border-slate-800 rounded-lg flex items-center justify-center mx-auto mb-5 shadow-sm dark:shadow-none">
+              <BarChart3 className="w-6 h-6 text-slate-400 dark:text-brand-text-secondary" />
             </div>
-            <h2 className="text-lg font-semibold text-white mb-1.5">No Tickets Yet</h2>
-            <p className="text-slate-500 text-sm mb-6 max-w-md">
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-brand-text mb-1.5">No Tickets Yet</h2>
+            <p className="text-slate-500 dark:text-brand-text-secondary text-sm mb-6 max-w-md">
               Start by creating a new timesheet or importing tickets from Google Sheets
             </p>
             <motion.button
               onClick={() => setShowImportModal(true)}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-md text-sm font-semibold bg-[var(--brand-orange)] text-white hover:bg-[var(--brand-orange-hover)] transition-colors"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-md text-sm font-semibold bg-brand-primary text-white hover:bg-[#0891B2] transition-colors"
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.97 }}
             >
@@ -569,7 +571,7 @@ export default function ModernDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0A0A0B] text-white">
+    <div className="min-h-screen bg-[#F8FAFC] dark:bg-brand-bg text-slate-900 dark:text-brand-text transition-colors duration-150">
       <ModernHeader
         onRefresh={handleRefreshSheets}
         onImport={() => setShowImportModal(true)}
@@ -585,8 +587,8 @@ export default function ModernDashboard() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <h1 className="text-[28px] font-semibold text-white tracking-tight mb-1">ITSM NAC Operations Dashboard</h1>
-          <p className="text-slate-500 text-[13px]">{stats.open.toLocaleString()} Open Tickets require attention &bull; {dateRange === 'all' ? 'All time' : dateRange === '3months' ? 'Last 3 months' : dateRange === 'week' ? 'Last week' : dateRange === 'month' ? 'Last month' : dateRange === 'year' ? 'Last year' : 'Custom period'}</p>
+          <h1 className="text-[28px] font-semibold text-slate-900 dark:text-brand-text tracking-tight mb-1">ITSM NAC Operations Dashboard</h1>
+          <p className="text-slate-500 dark:text-brand-text-secondary text-[13px]">{stats.open.toLocaleString()} Open Tickets require attention &bull; {dateRange === 'all' ? 'All time' : dateRange === '3months' ? 'Last 3 months' : dateRange === 'week' ? 'Last week' : dateRange === 'month' ? 'Last month' : dateRange === 'year' ? 'Last year' : 'Custom period'}</p>
         </motion.div>
 
         {/* Filter controls row */}
@@ -598,15 +600,15 @@ export default function ModernDashboard() {
         >
           {/* First sub-row: Time filter */}
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-[11px] font-medium text-slate-500 uppercase tracking-wide mr-1 w-24">Time Range</span>
+            <span className="text-[11px] font-medium text-slate-500 dark:text-brand-text-secondary uppercase tracking-wide mr-1 w-24">Time Range</span>
             <div className="flex flex-wrap items-center gap-1">
               {['all', 'week', 'month', '3months', 'year', 'custom'].map((range) => (
                 <button
                   key={range}
                   onClick={() => setDateRange(range)}
                   className={`px-3 py-1.5 rounded-md text-[12px] font-medium transition-colors ${dateRange === range
-                    ? 'bg-[var(--accent)] text-white'
-                    : 'text-slate-400 hover:text-white hover:bg-white/[0.06]'
+                    ? 'bg-brand-primary text-white font-medium'
+                    : 'text-slate-600 dark:text-brand-text-secondary hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-white/[0.06]'
                     }`}
                 >
                   {range === 'all' && 'All Time'}
@@ -625,30 +627,30 @@ export default function ModernDashboard() {
                   type="date"
                   value={customStartDate}
                   onChange={(e) => setCustomStartDate(e.target.value)}
-                  className="px-2.5 py-1 bg-[#0A0A0B] border border-white/10 rounded-md text-white text-[12px] focus:outline-none focus:border-[#06B6D4]/60"
+                  className="px-2.5 py-1 bg-white dark:bg-brand-surface border border-slate-200 dark:border-slate-800 rounded-md text-slate-900 dark:text-white text-[12px] focus:outline-none focus:border-brand-primary"
                 />
                 <input
                   type="date"
                   value={customEndDate}
                   onChange={(e) => setCustomEndDate(e.target.value)}
-                  className="px-2.5 py-1 bg-[#0A0A0B] border border-white/10 rounded-md text-white text-[12px] focus:outline-none focus:border-[#06B6D4]/60"
+                  className="px-2.5 py-1 bg-white dark:bg-brand-surface border border-slate-200 dark:border-slate-800 rounded-md text-slate-900 dark:text-white text-[12px] focus:outline-none focus:border-brand-primary"
                 />
               </div>
             )}
           </div>
 
-          <div className="h-px bg-white/[0.06]" />
+          <div className="h-px bg-slate-200 dark:bg-slate-800" />
 
           {/* Second sub-row: Type chips & Site Dropdown */}
           <div className="flex flex-wrap items-center gap-4">
             {/* Type chips */}
             <div className="flex items-center gap-1 flex-wrap">
-              <span className="text-[11px] font-medium text-slate-500 uppercase tracking-wide mr-1 w-24">Ticket Type</span>
+              <span className="text-[11px] font-medium text-slate-500 dark:text-brand-text-secondary uppercase tracking-wide mr-1 w-24">Ticket Type</span>
               <button
                 onClick={() => toggleTypeFilter('all')}
                 className={`px-3 py-1.5 rounded-md text-[12px] font-medium transition-colors ${selectedTypes.length === 0
-                  ? 'bg-white/10 text-white'
-                  : 'text-slate-400 hover:text-white hover:bg-white/[0.06]'
+                  ? 'bg-slate-200 dark:bg-white/10 text-slate-900 dark:text-white'
+                  : 'text-slate-600 dark:text-brand-text-secondary hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-white/[0.06]'
                   }`}
               >
                 All Types
@@ -660,8 +662,8 @@ export default function ModernDashboard() {
                     key={type}
                     onClick={() => toggleTypeFilter(type)}
                     className={`px-3 py-1.5 rounded-md text-[12px] font-medium transition-colors ${isSelected
-                      ? 'bg-[var(--accent)]/15 text-[var(--accent)]'
-                      : 'text-slate-400 hover:text-white hover:bg-white/[0.06]'
+                      ? 'bg-brand-primary/15 text-brand-primary border border-brand-primary/30'
+                      : 'text-slate-600 dark:text-brand-text-secondary hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-white/[0.06]'
                       }`}
                   >
                     {type}
@@ -672,11 +674,11 @@ export default function ModernDashboard() {
 
             {/* Site Dropdown */}
             <div className="relative z-50 flex items-center gap-2">
-              <span className="text-[11px] font-medium text-slate-500 uppercase tracking-wide">Site</span>
+              <span className="text-[11px] font-medium text-slate-500 dark:text-brand-text-secondary uppercase tracking-wide">Site</span>
               <div className="relative z-50">
                 <button
                   onClick={() => setSiteDropdownOpen(!siteDropdownOpen)}
-                  className="px-3 py-1.5 bg-[#0A0A0B] border border-white/10 rounded-md text-[12px] font-medium text-slate-300 hover:border-white/20 flex items-center gap-2 cursor-pointer focus:outline-none focus:border-[#06B6D4]/60 min-w-[150px] justify-between transition-colors"
+                  className="px-3 py-1.5 bg-white dark:bg-brand-surface border border-slate-200 dark:border-slate-800 rounded-md text-[12px] font-medium text-slate-700 dark:text-brand-text-secondary hover:border-slate-300 dark:hover:border-slate-700 flex items-center gap-2 cursor-pointer focus:outline-none focus:border-brand-primary min-w-[150px] justify-between transition-colors shadow-sm dark:shadow-none"
                 >
                   <span>
                     {selectedSites.length === 0
@@ -685,20 +687,20 @@ export default function ModernDashboard() {
                         ? selectedSites[0]
                         : `${selectedSites.length} Sites Selected`}
                   </span>
-                  <ChevronDown className="w-3.5 h-3.5 text-slate-500" />
+                  <ChevronDown className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
                 </button>
 
                 {siteDropdownOpen && (
                   <>
                     <div className="fixed inset-0 z-30" onClick={() => setSiteDropdownOpen(false)} />
 
-                    <div className="absolute right-0 top-full z-[60] mt-1.5 flex w-64 flex-col gap-2 rounded-lg border border-white/10 bg-[#161618] p-2.5 shadow-xl shadow-black/40">
+                    <div className="absolute right-0 top-full z-[60] mt-1.5 flex w-64 flex-col gap-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-brand-surface p-2.5 shadow-xl">
                       <input
                         type="text"
                         placeholder="Search site..."
                         value={dropdownSearch}
                         onChange={(e) => setDropdownSearch(e.target.value)}
-                        className="w-full px-2.5 py-1.5 bg-[#0A0A0B] border border-white/10 rounded-md text-white text-xs placeholder-slate-500 focus:outline-none focus:border-[#06B6D4]/60"
+                        className="w-full px-2.5 py-1.5 bg-slate-50 dark:bg-brand-bg border border-slate-200 dark:border-slate-800 rounded-md text-slate-900 dark:text-white text-xs placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-brand-primary"
                         autoFocus
                       />
 
@@ -711,15 +713,15 @@ export default function ModernDashboard() {
                               <div
                                 key={site}
                                 onClick={() => toggleSiteFilter(site)}
-                                className="flex items-center gap-2 p-1.5 rounded-md hover:bg-white/[0.06] cursor-pointer transition-colors text-xs"
+                                className="flex items-center gap-2 p-1.5 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800/60 cursor-pointer transition-colors text-xs"
                               >
                                 <input
                                   type="checkbox"
                                   checked={isSelected}
                                   readOnly
-                                  className="rounded border-slate-700 text-[#06B6D4] focus:ring-0 focus:ring-offset-0 pointer-events-none bg-slate-800"
+                                  className="rounded border-slate-300 dark:border-slate-700 text-brand-primary focus:ring-0 focus:ring-offset-0 pointer-events-none bg-white dark:bg-slate-800"
                                 />
-                                <span className={isSelected ? 'text-[#06B6D4] font-medium' : 'text-slate-300'}>
+                                <span className={isSelected ? 'text-brand-primary font-medium' : 'text-slate-700 dark:text-slate-300'}>
                                   {site}
                                 </span>
                               </div>
@@ -733,7 +735,7 @@ export default function ModernDashboard() {
                             clearSiteFilters()
                             setSiteDropdownOpen(false)
                           }}
-                          className="w-full text-center text-[11px] text-[#06B6D4] hover:underline font-medium mt-1 py-1"
+                          className="w-full text-center text-[11px] text-brand-primary hover:underline font-medium mt-1 py-1"
                         >
                           Clear Filter
                         </button>
@@ -778,7 +780,7 @@ export default function ModernDashboard() {
               sparklineData: sparklineDataTotal,
               sparklineColor: monthTrendStats.total.color,
               trendColor: monthTrendStats.total.color,
-              iconColor: 'text-emerald-400'
+              iconColor: 'text-emerald-500 dark:text-emerald-400'
             },
             {
               label: 'Closed Tickets',
@@ -803,8 +805,8 @@ export default function ModernDashboard() {
               sparklineData: sparklineDataOpen,
               sparklineColor: monthTrendStats.open.color,
               trendColor: monthTrendStats.open.color,
-              iconColor: stats.open > 0 ? 'text-amber-400' : 'text-emerald-400',
-              cardClass: stats.open > 0 ? 'border border-amber-500/30 bg-amber-500/[0.06]' : ''
+              iconColor: stats.open > 0 ? 'text-amber-500 dark:text-amber-400' : 'text-emerald-500 dark:text-emerald-400',
+              cardClass: stats.open > 0 ? 'border-amber-300 bg-amber-50/50 dark:border-amber-500/30 dark:bg-amber-500/[0.06]' : ''
             },
             {
               label: 'Avg Resolution Time',
@@ -821,20 +823,20 @@ export default function ModernDashboard() {
           ].sort((a, b) => ['Total Tickets', 'Open Tickets', 'Closed Tickets', 'Avg Response Time', 'Avg Resolution Time'].indexOf(a.label) - ['Total Tickets', 'Open Tickets', 'Closed Tickets', 'Avg Response Time', 'Avg Resolution Time'].indexOf(b.label)).map((kpi, idx) => (
             <motion.div
               key={kpi.label}
-              className={`relative z-0 rounded-[10px] bg-[var(--bg-surface)] p-5 h-[184px] flex flex-col transition-colors duration-150 ${idx === 0 ? 'bg-[var(--bg-surface-raised)]' : ''} ${kpi.cardClass || ''}`}
+              className={`relative z-0 rounded-[10px] bg-white dark:bg-brand-surface border border-slate-200 dark:border-slate-800 p-5 h-[184px] flex flex-col transition-colors duration-150 shadow-sm dark:shadow-none ${idx === 0 ? 'bg-slate-50/60 dark:bg-brand-surface' : ''} ${kpi.cardClass || ''}`}
               variants={itemVariants}
             >
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="text-slate-500 text-[12.5px] font-medium mb-2">{kpi.label}</p>
-                  <p className="text-white text-[28px] font-semibold leading-none tabular-nums">{kpi.value}</p>
+                  <p className="text-slate-500 dark:text-brand-text-secondary text-[12.5px] font-medium mb-2">{kpi.label}</p>
+                  <p className="text-slate-900 dark:text-brand-text text-[28px] font-semibold leading-none tabular-nums">{kpi.value}</p>
                   {kpi.sla && (
-                    <p className="mt-1 text-[11px] text-slate-400">SLA: {kpi.sla.percent}% within {formatResolutionTime(kpi.sla.targetSeconds)}</p>
+                    <p className="mt-1 text-[11px] text-slate-500 dark:text-brand-text-secondary">SLA: {kpi.sla.percent}% within {formatResolutionTime(kpi.sla.targetSeconds)}</p>
                   )}
-                  <p className="mt-3 text-[11px] text-slate-500 no-underline">{kpi.context}</p>
+                  <p className="mt-3 text-[11px] text-slate-500 dark:text-brand-text-secondary no-underline">{kpi.context}</p>
                 </div>
-                <div className="w-8 h-8 rounded-md bg-white/[0.05] flex items-center justify-center flex-shrink-0">
-                  <kpi.icon className={`w-4 h-4 ${kpi.iconColor || 'text-slate-400'}`} />
+                <div className="w-8 h-8 rounded-md bg-slate-100 dark:bg-white/[0.05] border border-slate-200 dark:border-white/10 flex items-center justify-center flex-shrink-0">
+                  <kpi.icon className={`w-4 h-4 ${kpi.iconColor || 'text-slate-500 dark:text-brand-text-secondary'}`} />
                 </div>
               </div>
               {kpi.comparison && kpi.comparison.valid ? (
@@ -843,7 +845,7 @@ export default function ModernDashboard() {
                     <div className="flex flex-wrap items-center gap-x-1 gap-y-0.5 leading-tight">
                       {kpi.comparison.direction && kpi.comparison.direction < 0 ? <TrendingDown className="w-3 h-3 flex-shrink-0" style={{ color: kpi.comparison.color }} /> : <TrendingUp className="w-3 h-3 flex-shrink-0" style={{ color: kpi.comparison.color }} />}
                       <span className="text-[11px] font-medium tabular-nums" style={{ color: kpi.comparison.color }}>{kpi.comparison.label}</span>
-                      <span className="text-[11px] text-slate-500 no-underline">{kpi.comparison.context}</span>
+                      <span className="text-[11px] text-slate-500 dark:text-brand-text-secondary no-underline">{kpi.comparison.context}</span>
                     </div>
                   </div>
 
@@ -865,7 +867,7 @@ export default function ModernDashboard() {
         </motion.div>
 
         <motion.section
-          className="relative z-0 rounded-[10px] border border-[var(--border-subtle)] bg-[var(--bg-surface)] p-5 lg:p-6"
+          className="relative z-0 rounded-[10px] border border-slate-200 dark:border-slate-800 bg-white dark:bg-brand-surface p-5 lg:p-6 shadow-sm dark:shadow-none transition-colors duration-150"
           variants={itemVariants}
           initial="hidden"
           animate="visible"
@@ -873,28 +875,28 @@ export default function ModernDashboard() {
         >
           <div className="flex items-start justify-between gap-4 mb-5">
             <div>
-              <h2 className="text-[16px] font-semibold text-white">Ticket Activity</h2>
-              <p className="text-[12px] text-slate-500 mt-1">Daily comparison of tickets opened and closed</p>
+              <h2 className="text-[16px] font-semibold text-slate-900 dark:text-brand-text">Ticket Activity</h2>
+              <p className="text-[12px] text-slate-500 dark:text-brand-text-secondary mt-1">Daily comparison of tickets opened and closed</p>
             </div>
             <div className="flex items-center gap-3 text-[11px]">
-              <span className="flex items-center gap-1.5 text-slate-400"><i className="h-2 w-2 rounded-full bg-[#00A6A6]" />Tickets Opened</span>
-              <span className="flex items-center gap-1.5 text-slate-400"><i className="h-2 w-2 rounded-full bg-[#A78BFA]" />Tickets Closed</span>
+              <span className="flex items-center gap-1.5 text-slate-600 dark:text-brand-text-secondary"><i className="h-2 w-2 rounded-full bg-[#06B6D4]" />Tickets Opened</span>
+              <span className="flex items-center gap-1.5 text-slate-600 dark:text-brand-text-secondary"><i className="h-2 w-2 rounded-full bg-[#A78BFA]" />Tickets Closed</span>
             </div>
           </div>
           <div className="h-[220px]" role="img" aria-label={`${stats.total} tickets across ${dailyData.length} active days, showing opened and closed tickets`}>
             {dailyData.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={dailyData} margin={{ top: 8, right: 12, left: -18, bottom: 0 }}>
-                  <CartesianGrid stroke="#252A30" strokeOpacity={0.55} vertical={false} strokeDasharray="3 4" />
-                  <XAxis dataKey="date" tickFormatter={(value) => new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} stroke="#727C88" tickLine={false} axisLine={false} fontSize={11} minTickGap={30} />
-                  <YAxis allowDecimals={false} stroke="#727C88" tickLine={false} axisLine={false} fontSize={11} />
-                  <Tooltip content={<TicketActivityTooltip />} cursor={{ stroke: '#00A6A6', strokeOpacity: 0.16 }} />
-                  <Line type="monotone" name="Tickets Opened" dataKey="opened" stroke="#00A6A6" strokeOpacity={0.9} strokeWidth={2} dot={false} activeDot={{ r: 3, fill: '#00A6A6', stroke: '#111417', strokeWidth: 2 }} />
-                  <Line type="monotone" name="Tickets Closed" dataKey="closed" stroke="#A78BFA" strokeOpacity={0.9} strokeWidth={2} dot={false} activeDot={{ r: 3, fill: '#A78BFA', stroke: '#111417', strokeWidth: 2 }} />
+                  <CartesianGrid stroke={darkMode ? '#1F2937' : '#E2E8F0'} strokeOpacity={0.7} vertical={false} strokeDasharray="3 4" />
+                  <XAxis dataKey="date" tickFormatter={(value) => new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} stroke={darkMode ? '#94A3B8' : '#64748B'} tickLine={false} axisLine={false} fontSize={11} minTickGap={30} />
+                  <YAxis allowDecimals={false} stroke={darkMode ? '#94A3B8' : '#64748B'} tickLine={false} axisLine={false} fontSize={11} />
+                  <Tooltip content={<TicketActivityTooltip />} cursor={{ stroke: '#06B6D4', strokeOpacity: 0.16 }} />
+                  <Line type="monotone" name="Tickets Opened" dataKey="opened" stroke="#06B6D4" strokeOpacity={0.9} strokeWidth={2} dot={false} activeDot={{ r: 3, fill: '#06B6D4', stroke: darkMode ? '#111827' : '#FFFFFF', strokeWidth: 2 }} />
+                  <Line type="monotone" name="Tickets Closed" dataKey="closed" stroke="#A78BFA" strokeOpacity={0.9} strokeWidth={2} dot={false} activeDot={{ r: 3, fill: '#A78BFA', stroke: darkMode ? '#111827' : '#FFFFFF', strokeWidth: 2 }} />
                 </LineChart>
               </ResponsiveContainer>
             ) : (
-              <div className="h-full flex items-center justify-center text-[13px] text-slate-500">No ticket activity for the selected filters.</div>
+              <div className="h-full flex items-center justify-center text-[13px] text-slate-500 dark:text-brand-text-secondary">No ticket activity for the selected filters.</div>
             )}
           </div>
         </motion.section>
@@ -907,8 +909,8 @@ export default function ModernDashboard() {
           animate="visible"
         >
           {/* Tickets by Type Chart */}
-          <motion.div className="xl:col-span-5 rounded-[10px] border border-[var(--border-subtle)] bg-[var(--bg-surface)] p-5 lg:p-6 flex flex-col justify-between" variants={itemVariants}>
-            <h3 className="text-[15px] font-semibold text-white mb-5">Tickets by Type</h3>
+          <motion.div className="xl:col-span-5 rounded-[10px] border border-slate-200 dark:border-slate-800 bg-white dark:bg-brand-surface p-5 lg:p-6 flex flex-col justify-between shadow-sm dark:shadow-none transition-colors duration-150" variants={itemVariants}>
+            <h3 className="text-[15px] font-semibold text-slate-900 dark:text-brand-text mb-5">Tickets by Type</h3>
             <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
               {/* Donut Chart Container */}
               <div className="relative w-full sm:w-[50%] h-[220px]">
@@ -939,8 +941,15 @@ export default function ModernDashboard() {
                       ))}
                     </Pie>
                     <Tooltip
-                      contentStyle={{ backgroundColor: '#1A1A1E', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', fontSize: '12px' }}
-                      labelStyle={{ color: '#fff' }}
+                      contentStyle={{
+                        backgroundColor: darkMode ? '#111827' : '#FFFFFF',
+                        border: darkMode ? '1px solid #1F2937' : '1px solid #E2E8F0',
+                        borderRadius: '8px',
+                        fontSize: '12px',
+                        color: darkMode ? '#FFFFFF' : '#0F172A',
+                        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                      }}
+                      labelStyle={{ color: darkMode ? '#FFFFFF' : '#0F172A' }}
                       formatter={(value) => {
                         const total = stats.total || 1
                         const pct = ((value / total) * 100).toFixed(1)
@@ -951,8 +960,8 @@ export default function ModernDashboard() {
                 </ResponsiveContainer>
                 {/* Center text for total */}
                 <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                  <span className="text-slate-500 text-[10px] font-medium uppercase tracking-wider">Total Tickets</span>
-                  <span className="text-white text-2xl font-semibold tabular-nums">{stats.total}</span>
+                  <span className="text-slate-500 dark:text-brand-text-secondary text-[10px] font-medium uppercase tracking-wider">Total Tickets</span>
+                  <span className="text-slate-900 dark:text-brand-text text-2xl font-semibold tabular-nums">{stats.total}</span>
                 </div>
               </div>
 
@@ -961,18 +970,20 @@ export default function ModernDashboard() {
                 {typeData.map((item, idx) => (
                   <div
                     key={item.name}
-                    className={`flex items-center justify-between px-2.5 py-2 rounded-md transition-colors duration-150 cursor-pointer ${activeTypeIndex === idx ? 'bg-white/[0.06]' : 'hover:bg-white/[0.04]'
+                    className={`flex items-center justify-between px-2.5 py-2 rounded-md transition-colors duration-150 cursor-pointer ${activeTypeIndex === idx
+                      ? 'bg-slate-100 dark:bg-white/[0.06]'
+                      : 'hover:bg-slate-50 dark:hover:bg-white/[0.04]'
                       }`}
                     onMouseEnter={() => setActiveTypeIndex(idx)}
                     onMouseLeave={() => setActiveTypeIndex(null)}
                   >
                     <div className="flex items-center gap-2">
                       <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: item.color }} />
-                      <span className="text-[13px] font-medium text-slate-300">
+                      <span className="text-[13px] font-medium text-slate-700 dark:text-slate-300">
                         {item.name}
                       </span>
                     </div>
-                    <span className="text-xs text-slate-500 font-medium tabular-nums ml-2">
+                    <span className="text-xs text-slate-500 dark:text-brand-text-secondary font-medium tabular-nums ml-2">
                       {item.percentage}% ({item.value})
                     </span>
                   </div>
@@ -982,21 +993,21 @@ export default function ModernDashboard() {
           </motion.div>
 
           {/* Tickets by Site Chart */}
-          <motion.div className="xl:col-span-7 rounded-[10px] border border-[var(--border-subtle)] bg-[var(--bg-surface)] p-5 lg:p-6" variants={itemVariants}>
+          <motion.div className="xl:col-span-7 rounded-[10px] border border-slate-200 dark:border-slate-800 bg-white dark:bg-brand-surface p-5 lg:p-6 shadow-sm dark:shadow-none transition-colors duration-150" variants={itemVariants}>
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5">
-              <h3 className="text-[15px] font-semibold text-white">Tickets by Site</h3>
+              <h3 className="text-[15px] font-semibold text-slate-900 dark:text-brand-text">Tickets by Site</h3>
               <div className="flex items-center gap-2">
                 <input
                   type="text"
                   placeholder="Search site..."
                   value={siteSearch}
                   onChange={(e) => setSiteSearch(e.target.value)}
-                  className="px-2.5 py-1.5 bg-[#0A0A0B] border border-white/10 rounded-md text-white text-xs placeholder-slate-500 focus:outline-none focus:border-[#06B6D4]/60"
+                  className="px-2.5 py-1.5 bg-white dark:bg-brand-bg border border-slate-200 dark:border-slate-800 rounded-md text-slate-900 dark:text-white text-xs placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-brand-primary"
                 />
                 <select
                   value={siteLimit === Infinity ? 'all' : siteLimit}
                   onChange={(e) => setSiteLimit(e.target.value === 'all' ? Infinity : Number(e.target.value))}
-                  className="bg-[#0A0A0B] border border-white/10 rounded-md px-2.5 py-1.5 text-white text-xs focus:outline-none focus:border-[#06B6D4]/60 cursor-pointer"
+                  className="bg-white dark:bg-brand-bg border border-slate-200 dark:border-slate-800 rounded-md px-2.5 py-1.5 text-slate-900 dark:text-white text-xs focus:outline-none focus:border-brand-primary cursor-pointer"
                 >
                   <option value="5">Top 5</option>
                   <option value="10">Top 10</option>
@@ -1011,21 +1022,28 @@ export default function ModernDashboard() {
                 data={filteredSiteData}
                 margin={{ left: 10, right: 30, top: 0, bottom: 0 }}
               >
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" horizontal={false} />
-                <XAxis type="number" stroke="#71717A" style={{ fontSize: '11px' }} />
-                <YAxis type="category" dataKey="name" stroke="#71717A" style={{ fontSize: '11px' }} width={120} />
+                <CartesianGrid strokeDasharray="3 3" stroke={darkMode ? '#1F2937' : '#E2E8F0'} horizontal={false} />
+                <XAxis type="number" stroke={darkMode ? '#94A3B8' : '#64748B'} style={{ fontSize: '11px' }} />
+                <YAxis type="category" dataKey="name" stroke={darkMode ? '#94A3B8' : '#64748B'} style={{ fontSize: '11px' }} width={120} />
                 <Tooltip
-                  cursor={{ fill: 'rgba(255,255,255,0.03)' }}
-                  contentStyle={{ backgroundColor: '#1A1A1E', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', fontSize: '12px' }}
-                  labelStyle={{ color: '#fff' }}
+                  cursor={{ fill: darkMode ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)' }}
+                  contentStyle={{
+                    backgroundColor: darkMode ? '#111827' : '#FFFFFF',
+                    border: darkMode ? '1px solid #1F2937' : '1px solid #E2E8F0',
+                    borderRadius: '8px',
+                    fontSize: '12px',
+                    color: darkMode ? '#FFFFFF' : '#0F172A',
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                  }}
+                  labelStyle={{ color: darkMode ? '#FFFFFF' : '#0F172A' }}
                   formatter={(value) => {
                     const total = stats.total || 1
                     const pct = ((value / total) * 100).toFixed(1)
                     return [`${value} tiket (${pct}%)`, 'Tickets']
                   }}
                 />
-                <Bar dataKey="value" fill="#00A6A6" radius={[0, 3, 3, 0]} maxBarSize={16}>
-                  <LabelList dataKey="value" position="right" fill="#A1A1AA" fontSize={11} offset={8} />
+                <Bar dataKey="value" fill="#06B6D4" radius={[0, 3, 3, 0]} maxBarSize={16}>
+                  <LabelList dataKey="value" position="right" fill={darkMode ? '#94A3B8' : '#64748B'} fontSize={11} offset={8} />
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
@@ -1034,16 +1052,16 @@ export default function ModernDashboard() {
 
         {/* Latest Tickets Table */}
         <motion.div
-          className="rounded-[10px] border border-[var(--border-subtle)] bg-[var(--bg-surface)] p-5 lg:p-6"
+          className="rounded-[10px] border border-slate-200 dark:border-slate-800 bg-white dark:bg-brand-surface p-5 lg:p-6 shadow-sm dark:shadow-none transition-colors duration-150"
           variants={itemVariants}
         >
           <div className="flex items-center justify-between mb-5">
-            <h2 className="text-[15px] font-semibold text-white">Latest Tickets</h2>
+            <h2 className="text-[15px] font-semibold text-slate-900 dark:text-brand-text">Latest Tickets</h2>
             <div className="flex items-center gap-3">
-              <span className="text-[12px] text-slate-500 font-medium">Showing {latestTickets.length}</span>
+              <span className="text-[12px] text-slate-500 dark:text-brand-text-secondary font-medium">Showing {latestTickets.length}</span>
               <button
                 onClick={() => navigate('/history')}
-                className="text-xs font-medium text-[#06B6D4] hover:text-[#06B6D4]/80 flex items-center gap-1 transition-colors"
+                className="text-xs font-medium text-brand-primary hover:text-brand-primary/80 flex items-center gap-1 transition-colors"
               >
                 View All Tickets →
               </button>

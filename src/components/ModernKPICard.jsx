@@ -58,7 +58,7 @@ export default function ModernKPICard({
           </div>
 
           {Icon && (
-            <div className={`p-3 rounded-lg bg-slate-800/50 border border-slate-700/50 ${colors.icon}`}>
+            <div className={`p-3 rounded-lg bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 ${colors.icon}`}>
               <Icon className="w-6 h-6" />
             </div>
           )}

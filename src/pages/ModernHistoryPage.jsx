@@ -91,7 +91,7 @@ export default function ModernHistoryPage() {
     <>
       <ModernHeader onRefresh={refreshHistory} lastSync={lastSheetsSync} />
       <motion.div
-        className="flex-1 overflow-y-auto bg-[var(--bg-base)]"
+        className="flex-1 overflow-y-auto bg-[#F8FAFC] dark:bg-brand-bg text-slate-900 dark:text-brand-text"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.25 }}
@@ -103,8 +103,8 @@ export default function ModernHistoryPage() {
           initial="hidden"
           animate="visible"
         >
-          <h1 className="text-[28px] font-semibold text-white tracking-tight mb-1">Ticket History</h1>
-          <p className="text-slate-500 text-[14px]">View and manage all tickets from your analysis sessions and imports.</p>
+          <h1 className="text-[28px] font-semibold text-slate-900 dark:text-white tracking-tight mb-1">Ticket History</h1>
+          <p className="text-slate-500 dark:text-slate-400 text-[14px]">View and manage all tickets from your analysis sessions and imports.</p>
         </motion.div>
 
         {/* Stats Cards */}
@@ -114,36 +114,36 @@ export default function ModernHistoryPage() {
           initial="hidden"
           animate="visible"
         >
-          <motion.div className="rounded-lg border border-white/[0.07] bg-[#111113] p-5" variants={itemVariants}>
-            <p className="text-slate-500 text-[12.5px] font-medium mb-2">Total Tickets</p>
-            <p className="text-[26px] font-semibold text-white tabular-nums">{allTickets.length}</p>
+          <motion.div className="rounded-lg border border-slate-200 dark:border-white/[0.07] bg-white dark:bg-[#111113] p-5 shadow-sm dark:shadow-none" variants={itemVariants}>
+            <p className="text-slate-500 dark:text-slate-400 text-[12.5px] font-medium mb-2">Total Tickets</p>
+            <p className="text-[26px] font-semibold text-slate-900 dark:text-white tabular-nums">{allTickets.length}</p>
           </motion.div>
-          <motion.div className="rounded-lg border border-white/[0.07] bg-[#111113] p-5" variants={itemVariants}>
-            <p className="text-slate-500 text-[12.5px] font-medium mb-2">Filtered Results</p>
-            <p className="text-[26px] font-semibold text-[var(--accent)] tabular-nums">{filtered.length}</p>
+          <motion.div className="rounded-lg border border-slate-200 dark:border-white/[0.07] bg-white dark:bg-[#111113] p-5 shadow-sm dark:shadow-none" variants={itemVariants}>
+            <p className="text-slate-500 dark:text-slate-400 text-[12.5px] font-medium mb-2">Filtered Results</p>
+            <p className="text-[26px] font-semibold text-cyan-600 dark:text-[var(--accent)] tabular-nums">{filtered.length}</p>
           </motion.div>
-          <motion.div className="rounded-lg border border-white/[0.07] bg-[#111113] p-5" variants={itemVariants}>
-            <p className="text-slate-500 text-[12.5px] font-medium mb-2">Active Filters</p>
-            <p className="text-[26px] font-semibold text-white tabular-nums">{Object.values(filters).filter(Boolean).length}</p>
+          <motion.div className="rounded-lg border border-slate-200 dark:border-white/[0.07] bg-white dark:bg-[#111113] p-5 shadow-sm dark:shadow-none" variants={itemVariants}>
+            <p className="text-slate-500 dark:text-slate-400 text-[12.5px] font-medium mb-2">Active Filters</p>
+            <p className="text-[26px] font-semibold text-slate-900 dark:text-white tabular-nums">{Object.values(filters).filter(Boolean).length}</p>
           </motion.div>
         </motion.div>
 
         {/* Filter Bar */}
         <motion.div
-          className="rounded-lg border border-white/[0.07] bg-[#111113] p-5 space-y-4"
+          className="rounded-lg border border-slate-200 dark:border-white/[0.07] bg-white dark:bg-[#111113] p-5 space-y-4 shadow-sm dark:shadow-none"
           variants={itemVariants}
           initial="hidden"
           animate="visible"
         >
           <div className="flex items-center justify-between">
-            <h2 className="text-[14px] font-semibold text-white flex items-center gap-2">
-              <Filter className="w-4 h-4 text-slate-500" />
+            <h2 className="text-[14px] font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+              <Filter className="w-4 h-4 text-slate-400 dark:text-slate-500" />
               Filters
             </h2>
             {hasFilters && (
               <button
                 onClick={clearFilters}
-                className="text-xs px-2.5 py-1 rounded-md text-[#06B6D4] hover:bg-[#06B6D4]/10 flex items-center gap-1 transition-colors"
+                className="text-xs px-2.5 py-1 rounded-md text-brand-primary hover:bg-brand-primary/10 flex items-center gap-1 transition-colors"
               >
                 <X className="w-3 h-3" />
                 Clear Filters
@@ -153,13 +153,13 @@ export default function ModernHistoryPage() {
 
           {/* Search Input */}
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-slate-500" />
             <input
               type="text"
               placeholder="Search tickets..."
               value={filters.search}
               onChange={e => setFilter('search', e.target.value)}
-              className="w-full pl-10 pr-3 py-2 bg-[#0A0A0B] border border-white/10 rounded-md text-white text-sm placeholder-slate-500 focus:outline-none focus:border-[#06B6D4]/60"
+              className="w-full pl-10 pr-3 py-2 bg-slate-50 dark:bg-[#0A0A0B] border border-slate-200 dark:border-white/10 rounded-md text-slate-900 dark:text-white text-sm placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-brand-primary"
             />
           </div>
 
@@ -175,7 +175,7 @@ export default function ModernHistoryPage() {
               <select
                 value={filters.status}
                 onChange={e => setFilter('status', e.target.value)}
-                className="bg-[#0A0A0B] border border-white/10 rounded-md px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-[#06B6D4]/60"
+                className="bg-slate-50 dark:bg-[#0A0A0B] border border-slate-200 dark:border-white/10 rounded-md px-3 py-2 text-sm text-slate-900 dark:text-slate-200 focus:outline-none focus:border-brand-primary"
               >
                 <option value="">All Status</option>
                 {STATUS_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
@@ -185,7 +185,7 @@ export default function ModernHistoryPage() {
               <select
                 value={filters.type}
                 onChange={e => setFilter('type', e.target.value)}
-                className="bg-[#0A0A0B] border border-white/10 rounded-md px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-[#06B6D4]/60"
+                className="bg-slate-50 dark:bg-[#0A0A0B] border border-slate-200 dark:border-white/10 rounded-md px-3 py-2 text-sm text-slate-900 dark:text-slate-200 focus:outline-none focus:border-brand-primary"
               >
                 <option value="">All Types</option>
                 {TYPE_OPTIONS.map(t => <option key={t} value={t}>{t}</option>)}
@@ -195,7 +195,7 @@ export default function ModernHistoryPage() {
               <select
                 value={filters.site}
                 onChange={e => setFilter('site', e.target.value)}
-                className="bg-[#0A0A0B] border border-white/10 rounded-md px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-[#06B6D4]/60"
+                className="bg-slate-50 dark:bg-[#0A0A0B] border border-slate-200 dark:border-white/10 rounded-md px-3 py-2 text-sm text-slate-900 dark:text-slate-200 focus:outline-none focus:border-brand-primary"
               >
                 <option value="">All Requesters</option>
                 {sites.map(s => <option key={s} value={s}>{s}</option>)}
@@ -205,7 +205,7 @@ export default function ModernHistoryPage() {
               <select
                 value={filters.engineer}
                 onChange={e => setFilter('engineer', e.target.value)}
-                className="bg-[#0A0A0B] border border-white/10 rounded-md px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-[#06B6D4]/60"
+                className="bg-slate-50 dark:bg-[#0A0A0B] border border-slate-200 dark:border-white/10 rounded-md px-3 py-2 text-sm text-slate-900 dark:text-slate-200 focus:outline-none focus:border-brand-primary"
               >
                 <option value="">All Engineers</option>
                 {engineers.map(e => <option key={e} value={e}>{e}</option>)}
@@ -216,7 +216,7 @@ export default function ModernHistoryPage() {
                 type="date"
                 value={filters.dateFrom}
                 onChange={e => setFilter('dateFrom', e.target.value)}
-                className="bg-[#0A0A0B] border border-white/10 rounded-md px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-[#06B6D4]/60"
+                className="bg-slate-50 dark:bg-[#0A0A0B] border border-slate-200 dark:border-white/10 rounded-md px-3 py-2 text-sm text-slate-900 dark:text-slate-200 focus:outline-none focus:border-brand-primary"
               />
 
               {/* Date To */}
@@ -224,7 +224,7 @@ export default function ModernHistoryPage() {
                 type="date"
                 value={filters.dateTo}
                 onChange={e => setFilter('dateTo', e.target.value)}
-                className="bg-[#0A0A0B] border border-white/10 rounded-md px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-[#06B6D4]/60"
+                className="bg-slate-50 dark:bg-[#0A0A0B] border border-slate-200 dark:border-white/10 rounded-md px-3 py-2 text-sm text-slate-900 dark:text-slate-200 focus:outline-none focus:border-brand-primary"
               />
             </motion.div>
           )}
@@ -233,7 +233,7 @@ export default function ModernHistoryPage() {
           <div className="flex gap-2 pt-1">
             <button
               onClick={() => setShowFilters(!showFilters)}
-              className="px-3 py-1.5 rounded-md text-sm font-medium text-slate-300 border border-white/10 hover:bg-white/[0.06] transition-colors"
+              className="px-3 py-1.5 rounded-md text-sm font-medium text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors"
             >
               {showFilters ? 'Hide' : 'Show'} Advanced Filters
             </button>
@@ -249,14 +249,14 @@ export default function ModernHistoryPage() {
 
         {/* Data Table */}
         <motion.div
-          className="rounded-lg border border-white/[0.07] bg-[#111113] p-6"
+          className="rounded-lg border border-slate-200 dark:border-white/[0.07] bg-white dark:bg-[#111113] p-6 shadow-sm dark:shadow-none"
           variants={itemVariants}
           initial="hidden"
           animate="visible"
         >
           <div className="flex items-center justify-between mb-5">
-            <h2 className="text-[15px] font-semibold text-white">Ticket Results</h2>
-            <span className="text-xs text-slate-500 font-medium">{filtered.length} tickets</span>
+            <h2 className="text-[15px] font-semibold text-slate-900 dark:text-white">Ticket Results</h2>
+            <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">{filtered.length} tickets</span>
           </div>
           {filtered.length > 0 ? (
             <ModernDataTable
@@ -266,10 +266,10 @@ export default function ModernHistoryPage() {
             />
           ) : (
             <div className="text-center py-12">
-              <p className="text-slate-500 mb-3 text-sm">No tickets match your filters</p>
+              <p className="text-slate-500 dark:text-slate-400 mb-3 text-sm">No tickets match your filters</p>
               <button
                 onClick={clearFilters}
-                className="text-sm text-[#06B6D4] hover:underline"
+                className="text-sm text-brand-primary hover:underline"
               >
                 Clear filters and try again
               </button>

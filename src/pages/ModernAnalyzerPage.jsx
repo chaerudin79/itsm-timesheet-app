@@ -69,7 +69,7 @@ export default function ModernAnalyzerPage() {
       <>
         <ModernHeader />
         <motion.div
-          className="flex-1 flex flex-col items-center justify-center p-8"
+          className="flex-1 flex flex-col items-center justify-center p-8 bg-[#F8FAFC] dark:bg-brand-bg text-slate-900 dark:text-brand-text"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.3 }}
@@ -80,11 +80,11 @@ export default function ModernAnalyzerPage() {
             initial="hidden"
             animate="visible"
           >
-            <div className="w-12 h-12 bg-white/[0.05] rounded-lg flex items-center justify-center mx-auto mb-5">
+            <div className="w-12 h-12 bg-slate-100 dark:bg-white/[0.05] border border-slate-200 dark:border-white/10 rounded-lg flex items-center justify-center mx-auto mb-5">
               <Plus className="w-6 h-6 text-slate-400" />
             </div>
-            <h2 className="text-lg font-semibold text-white mb-1.5">No Analysis Sessions</h2>
-            <p className="text-slate-500 text-sm mb-6 max-w-md">
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-1.5">No Analysis Sessions</h2>
+            <p className="text-slate-500 dark:text-slate-400 text-sm mb-6 max-w-md">
               Create a new analysis session to start extracting tickets from WhatsApp chats using AI
             </p>
             <motion.button
@@ -109,18 +109,18 @@ export default function ModernAnalyzerPage() {
 
       {/* Main Content */}
       <motion.div
-        className="flex-1 flex overflow-hidden bg-[var(--bg-base)]"
+        className="flex-1 flex overflow-hidden bg-[#F8FAFC] dark:bg-brand-bg text-slate-900 dark:text-brand-text"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.25 }}
       >
         {/* Sessions Sidebar */}
-        <aside className="w-64 border-r border-[var(--border-subtle)] flex flex-col bg-[var(--bg-surface)]">
+        <aside className="w-64 border-r border-slate-200 dark:border-slate-800 flex flex-col bg-white dark:bg-brand-surface">
           {/* Sessions Header */}
-          <div className="p-3 border-b border-[var(--border-subtle)]">
+          <div className="p-3 border-b border-slate-200 dark:border-slate-800">
             <button
               onClick={createSession}
-              className="w-full flex items-center justify-center gap-2 py-2 rounded-[7px] text-[13px] font-semibold bg-[var(--accent)] text-black hover:bg-[var(--accent-hover)] transition-colors"
+              className="w-full flex items-center justify-center gap-2 py-2 rounded-[7px] text-[13px] font-semibold bg-brand-primary text-white hover:bg-cyan-600 transition-colors"
             >
               <Plus className="w-4 h-4" />
               New Session
@@ -133,16 +133,16 @@ export default function ModernAnalyzerPage() {
               <div
                 key={session.id}
                 className={`group relative rounded-md p-2.5 cursor-pointer transition-colors duration-150 ${activeSessionId === session.id
-                  ? 'bg-[var(--accent)]/10 border-l-2 border-[var(--accent)] pl-[9px]'
-                  : 'hover:bg-white/[0.05]'
+                  ? 'bg-cyan-500/10 border-l-2 border-brand-primary pl-[9px]'
+                  : 'hover:bg-slate-100 dark:hover:bg-white/[0.05]'
                   }`}
                 onClick={() => setActiveSessionId(session.id)}
               >
-                <p className={`text-sm font-medium truncate ${activeSessionId === session.id ? 'text-[var(--accent)]' : 'text-slate-300 group-hover:text-white'
+                <p className={`text-sm font-medium truncate ${activeSessionId === session.id ? 'text-brand-primary font-semibold' : 'text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white'
                   }`}>
                   {session.title}
                 </p>
-                <p className="text-xs text-slate-500 mt-0.5">
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                   {session.tickets?.length || 0} tickets
                 </p>
                 {activeSessionId === session.id && (
@@ -151,7 +151,7 @@ export default function ModernAnalyzerPage() {
                       e.stopPropagation()
                       deleteSession(session.id)
                     }}
-                    className="absolute right-2 top-2 opacity-0 group-hover:opacity-100 text-slate-500 hover:text-red-400 transition-colors"
+                    className="absolute right-2 top-2 opacity-0 group-hover:opacity-100 text-slate-400 hover:text-red-500 transition-colors"
                   >
                     ×
                   </button>
@@ -161,7 +161,7 @@ export default function ModernAnalyzerPage() {
           </div>
 
           {/* Sync Status */}
-          <div className="p-3 border-t border-[var(--border-subtle)]">
+          <div className="p-3 border-t border-slate-200 dark:border-slate-800">
             <GoogleSheetsStatus syncStatus={syncStatus} lastSyncTime={lastSyncTime} sheetId={sheetId} />
           </div>
         </aside>
@@ -169,17 +169,17 @@ export default function ModernAnalyzerPage() {
         {/* Chat Area */}
         <div className="flex-1 flex flex-col overflow-hidden">
           {/* Session Title with Back Button */}
-          <div className="border-b border-[var(--border-subtle)] px-5 py-3.5 flex items-center gap-3 bg-[var(--bg-surface)]">
+          <div className="border-b border-slate-200 dark:border-slate-800 px-5 py-3.5 flex items-center gap-3 bg-white dark:bg-brand-surface">
             <button
               onClick={() => navigate('/')}
-              className="flex items-center gap-1.5 text-sm text-slate-400 hover:text-white px-2 py-1 rounded-md hover:bg-white/[0.06] transition-colors"
+              className="flex items-center gap-1.5 text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white px-2 py-1 rounded-md hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors"
             >
               <ArrowLeft className="w-4 h-4" />
               Back
             </button>
             <div>
-              <h2 className="text-[14px] font-semibold text-white">{activeSession.title}</h2>
-              <p className="text-xs text-slate-500 mt-0.5">
+              <h2 className="text-[14px] font-semibold text-slate-900 dark:text-white">{activeSession.title}</h2>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                 {activeSession.tickets?.length || 0} tickets extracted
               </p>
             </div>

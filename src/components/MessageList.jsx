@@ -27,17 +27,17 @@ export default function MessageList({ messages, loading, onUpdateTickets, onAppr
             {displayTickets.length > 0 ? (
               <div className="w-full mb-4">
                 <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-                  <div className="text-sm font-semibold text-[#06B6D4]">
+                  <div className="text-sm font-semibold text-brand-primary">
                     {displayTickets.length} tickets loaded
                   </div>
                   <button
                     onClick={() => setShowExportModal(true)}
-                    className="inline-flex items-center gap-2 rounded-md bg-[#0F172A] border border-white/10 px-3 py-2 text-sm font-medium text-white hover:bg-white/5 transition-colors"
+                    className="inline-flex items-center gap-2 rounded-md bg-white dark:bg-brand-surface border border-slate-200 dark:border-white/10 px-3 py-2 text-sm font-medium text-slate-700 dark:text-white hover:bg-slate-50 dark:hover:bg-white/5 transition-colors shadow-sm"
                   >
                     Export
                   </button>
                 </div>
-                <div className="bg-[#111827] rounded-lg border border-white/10 p-4">
+                <div className="bg-white dark:bg-brand-surface rounded-lg border border-slate-200 dark:border-white/10 p-4 shadow-sm dark:shadow-none">
                   <TicketTable
                     tickets={displayTickets}
                     onUpdateTickets={onUpdateTickets}
